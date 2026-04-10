@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#050814">
+  <title>Ultra Trading – Admin Panel</title>
+  <style>
+    :root{--bg-deep:#050814;--bg-surface:#101628;--bg-elevated:#1a223a;--bg-card:#141c30;--text-primary:#fff;--text-secondary:#8e9bbe;--text-muted:#4a5578;--border-color:#2a3553;--border-light:#1e2d4a;--accent-blue:#1c68ff;--accent-blue-glow:rgba(28,104,255,0.3);--neon-green:#00d964;--neon-red:#ff3b30;--gold:#f59e0b;--purple:#8b5cf6;--font:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;}
+    *{margin:0;padding:0;box-sizing:border-box;font-family:var(--font);}
+    body{display:flex;height:100vh;overflow:hidden;background:var(--bg-deep);color:var(--text-primary);font-size:14px;}
+    button{cursor:pointer;outline:none;border:none;font-family:inherit;}
+    input,select,textarea{font-family:inherit;outline:none;}
+
+    /* Sidebar */
+    .sidebar{width:220px;background:var(--bg-surface);border-right:1px solid var(--border-color);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;}
+    .s-logo{padding:18px 14px;border-bottom:1px solid var(--border-color);display:flex;align-items:center;gap:10px;}
+    .s-logo-icon{font-size:26px;}
+    .s-logo-text{font-size:15px;font-weight:900;}
+    .s-logo-sub{font-size:10px;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:1px;}
+    .nav-grp-label{font-size:10px;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;padding:12px 14px 4px;}
+    .nav-lnk{display:flex;align-items:center;gap:10px;padding:10px 14px;color:var(--text-secondary);font-weight:600;cursor:pointer;border-left:3px solid transparent;transition:.2s;}
+    .nav-lnk:hover{background:var(--bg-elevated);color:var(--text-primary);}
+    .nav-lnk.active{color:var(--accent-blue);background:rgba(28,104,255,.08);border-left-color:var(--accent-blue);}
+    .nav-lnk .ni{font-size:17px;width:22px;text-align:center;}
+    .nav-badge{background:var(--neon-red);color:#fff;font-size:10px;font-weight:800;padding:2px 6px;border-radius:10px;margin-left:auto;}
+    .s-foot{padding:14px;border-top:1px solid var(--border-color);margin-top:auto;}
+    .s-admin{display:flex;align-items:center;gap:10px;}
+    .s-avt{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--accent-blue),var(--purple));display:flex;align-items:center;justify-content:center;font-size:16px;}
+
+    /* Main */
+    .main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+    .topbar{background:var(--bg-surface);border-bottom:1px solid var(--border-color);padding:0 18px;height:54px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0;}
+    .tb-title{font-size:17px;font-weight:800;}
+    .tb-right{display:flex;align-items:center;gap:10px;}
+    .content{flex:1;overflow-y:auto;padding:18px;}
+
+    /* Panels */
+    .panel{display:none;}
+    .panel.active{display:block;animation:pgIn .3s ease;}
+    @keyframes pgIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+    /* Cards */
+    .card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:12px;padding:18px;margin-bottom:16px;}
+    .card-title{font-size:14px;font-weight:800;margin-bottom:14px;}
+
+    /* Dash grid */
+    .dash-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:18px;}
+    .dash-card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:10px;padding:14px;position:relative;overflow:hidden;}
+    .dash-card::after{content:attr(data-icon);position:absolute;right:10px;top:8px;font-size:30px;opacity:.12;}
+    .dc-label{font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;}
+    .dc-val{font-size:26px;font-weight:900;margin:4px 0 2px;}
+    .dc-sub{font-size:11px;color:var(--text-secondary);}
+
+    /* Table */
+    .tbl-wrap{background:var(--bg-card);border:1px solid var(--border-color);border-radius:12px;overflow:hidden;margin-bottom:16px;}
+    .tbl-hdr{padding:12px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border-color);}
+    .tbl-title{font-size:14px;font-weight:800;}
+    table{width:100%;border-collapse:collapse;}
+    thead th{background:rgba(0,0,0,.2);padding:9px 12px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-secondary);white-space:nowrap;}
+    tbody td{padding:11px 12px;border-bottom:1px solid var(--border-light);font-size:12px;white-space:nowrap;}
+    tbody tr:last-child td{border-bottom:none;}
+    tbody tr:hover td{background:rgba(255,255,255,.02);}
+
+    /* Action buttons */
+    .act{display:flex;gap:5px;flex-wrap:wrap;}
+    .ab{padding:4px 9px;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer;transition:.15s;border:1px solid;}
+    .ab:active{transform:scale(.95);}
+    .ab-green{background:rgba(0,217,100,.12);color:var(--neon-green);border-color:rgba(0,217,100,.3);}
+    .ab-red{background:rgba(255,59,48,.12);color:var(--neon-red);border-color:rgba(255,59,48,.3);}
+    .ab-blue{background:rgba(28,104,255,.12);color:var(--accent-blue);border-color:rgba(28,104,255,.3);}
+    .ab-gold{background:rgba(245,158,11,.12);color:var(--gold);border-color:rgba(245,158,11,.3);}
+
+    /* Forms */
+    .form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:12px;}
+    .fg{display:flex;flex-direction:column;gap:5px;}
+    .fl{font-size:10px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;}
+    .fi{background:var(--bg-elevated);border:1px solid var(--border-color);color:var(--text-primary);padding:9px 12px;border-radius:6px;font-size:13px;width:100%;transition:.2s;}
+    .fi:focus{border-color:var(--accent-blue);}
+    .fi-sm{width:90px;padding:5px 8px;font-size:12px;border-radius:4px;}
+
+    /* Buttons */
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 16px;border-radius:7px;font-size:13px;font-weight:700;transition:.2s;cursor:pointer;border:none;}
+    .btn:active{transform:scale(.96);}
+    .btn-primary{background:var(--accent-blue);color:#fff;box-shadow:0 4px 14px var(--accent-blue-glow);}
+    .btn-success{background:var(--neon-green);color:#000;}
+    .btn-danger{background:var(--neon-red);color:#fff;}
+    .btn-outline{background:transparent;border:1px solid var(--border-color);color:var(--text-primary);}
+    .btn-ghost{background:transparent;color:var(--text-secondary);}
+    .btn-sm{padding:6px 12px;font-size:12px;}
+    .btn-full{width:100%;}
+
+    /* Status badges */
+    .badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:12px;font-size:10px;font-weight:700;text-transform:uppercase;}
+    .bg-green{background:rgba(0,217,100,.15);color:var(--neon-green);}
+    .bg-red{background:rgba(255,59,48,.15);color:var(--neon-red);}
+    .bg-gold{background:rgba(245,158,11,.15);color:var(--gold);}
+    .bg-blue{background:rgba(28,104,255,.15);color:var(--accent-blue);}
+    .bg-muted{background:rgba(142,155,190,.1);color:var(--text-secondary);}
+    .st-pending{color:var(--gold);font-weight:700;}
+    .st-approved{color:var(--neon-green);font-weight:700;}
+    .st-rejected{color:var(--neon-red);font-weight:700;}
+
+    /* Graph */
+    .mode-row{display:flex;gap:8px;margin-bottom:14px;}
+    .mode-btn{flex:1;padding:12px 8px;border-radius:8px;background:var(--bg-elevated);border:2px solid var(--border-color);color:var(--text-secondary);cursor:pointer;text-align:center;font-weight:800;font-size:13px;transition:.2s;}
+    .mode-btn.m-auto{border-color:var(--accent-blue);color:var(--accent-blue);background:rgba(28,104,255,.1);}
+    .mode-btn.m-manual{border-color:var(--gold);color:var(--gold);background:rgba(245,158,11,.1);}
+    .mode-btn.m-ai{border-color:var(--neon-green);color:var(--neon-green);background:rgba(0,217,100,.1);}
+    .dir-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+    .dir-btn{padding:14px;border-radius:8px;background:var(--bg-elevated);border:2px solid var(--border-color);cursor:pointer;text-align:center;font-weight:800;transition:.2s;}
+    .dir-up{border-color:var(--neon-green);color:var(--neon-green);background:rgba(0,217,100,.1);}
+    .dir-neutral{border-color:var(--text-muted);color:var(--text-secondary);background:rgba(142,155,190,.08);}
+    .dir-down{border-color:var(--neon-red);color:var(--neon-red);background:rgba(255,59,48,.1);}
+
+    /* Code editor */
+    .code-ed{background:#0d1117;border:1px solid var(--border-color);border-radius:8px;padding:14px;font-family:'Courier New',monospace;font-size:12px;line-height:1.6;color:#e6edf3;width:100%;min-height:180px;resize:vertical;}
+    .code-ed:focus{border-color:var(--accent-blue);}
+
+    /* Settings rows */
+    .st-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border-light);}
+    .st-row:last-child{border-bottom:none;}
+    .st-label{font-size:13px;font-weight:600;}
+    .st-sub{font-size:11px;color:var(--text-muted);margin-top:2px;}
+
+    /* Toggle */
+    .tog{width:44px;height:24px;background:var(--border-color);border-radius:12px;position:relative;cursor:pointer;transition:.25s;flex-shrink:0;}
+    .tog.on{background:var(--accent-blue);box-shadow:0 0 10px var(--accent-blue-glow);}
+    .tog::after{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;background:#fff;border-radius:50%;transition:.3s cubic-bezier(.68,-.55,.265,1.55);box-shadow:0 2px 5px rgba(0,0,0,.3);}
+    .tog.on::after{transform:translateX(20px);}
+
+    /* Notif */
+    .notif-item{display:flex;gap:12px;padding:13px 16px;border-bottom:1px solid var(--border-light);cursor:pointer;}
+    .notif-item:hover{background:var(--bg-elevated);}
+    .notif-item.unread{border-left:3px solid var(--accent-blue);}
+    .notif-ti{font-size:13px;font-weight:700;}
+    .notif-msg{font-size:11px;color:var(--text-secondary);margin-top:2px;}
+    .notif-ts{font-size:10px;color:var(--text-muted);}
+
+    /* Payment filter */
+    .pay-filter{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+
+    /* Ads */
+    .ad-card{background:var(--bg-elevated);border:1px solid var(--border-color);border-radius:8px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:12px;}
+    .ad-info{flex:1;}
+
+    /* 2-col grid */
+    .g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+    @media(max-width:900px){.g2{grid-template-columns:1fr;}}
+
+    /* Search input */
+    .srch{background:var(--bg-elevated);border:1px solid var(--border-color);color:var(--text-primary);padding:7px 12px;border-radius:6px;font-size:13px;}
+    .srch:focus{border-color:var(--accent-blue);}
+
+    /* Pressure bars */
+    .pbar{background:var(--bg-elevated);border-radius:4px;height:10px;overflow:hidden;border-radius:5px;}
+    .pbar-inner{height:100%;border-radius:5px;transition:width 1s;}
+
+    ::-webkit-scrollbar{width:4px;height:4px;}
+    ::-webkit-scrollbar-thumb{background:var(--border-color);border-radius:2px;}
+  </style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="s-logo">
+    <span class="s-logo-icon">⚡</span>
+    <div><div class="s-logo-text">ULTRA ADMIN</div><div class="s-logo-sub">Control Panel</div></div>
+  </div>
+  <nav>
+    <div class="nav-grp-label">Overview</div>
+    <div class="nav-lnk active" onclick="go('dashboard')"><span class="ni">🏠</span>Dashboard</div>
+    <div class="nav-lnk" onclick="go('notifications')" id="nlNotif"><span class="ni">🔔</span>Notifications<span class="nav-badge" id="notifBadge" style="display:none">0</span></div>
+    <div class="nav-grp-label">Management</div>
+    <div class="nav-lnk" onclick="go('users')"><span class="ni">👥</span>Users</div>
+    <div class="nav-lnk" onclick="go('payments')"><span class="ni">💳</span>Payments<span class="nav-badge" id="payBadge" style="display:none">0</span></div>
+    <div class="nav-lnk" onclick="go('markets')"><span class="ni">📈</span>Markets</div>
+    <div class="nav-lnk" onclick="go('trades')"><span class="ni">📊</span>All Trades</div>
+    <div class="nav-grp-label">Control</div>
+    <div class="nav-lnk" onclick="go('graph')"><span class="ni">🧠</span>Graph Control</div>
+    <div class="nav-lnk" onclick="go('ads')"><span class="ni">📢</span>Ads Manager</div>
+    <div class="nav-lnk" onclick="go('settings')"><span class="ni">⚙️</span>Settings</div>
+  </nav>
+  <div class="s-foot">
+    <div class="s-admin"><div class="s-avt">🛡️</div><div><div style="font-size:13px;font-weight:700;" id="sbName">Admin</div><div style="font-size:10px;color:var(--text-muted)">Super Admin</div></div></div>
+    <button class="btn btn-ghost btn-sm btn-full" style="margin-top:10px;" onclick="logout()">← Sign Out</button>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div class="tb-title" id="tbTitle">🏠 Dashboard</div>
+    <div class="tb-right">
+      <input class="srch" id="gSearch" placeholder="Search users..." oninput="gSearchHandler()">
+      <button class="btn btn-outline btn-sm" onclick="location.href='/trade'">← Live Site</button>
+    </div>
+  </div>
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="panel active" id="p-dashboard">
+      <div class="dash-grid">
+        <div class="dash-card" data-icon="👥"><div class="dc-label">Total Users</div><div class="dc-val" id="dUsers">—</div><div class="dc-sub">Traders</div></div>
+        <div class="dash-card" data-icon="📊"><div class="dc-label">Total Trades</div><div class="dc-val" id="dTrades">—</div><div class="dc-sub">All time</div></div>
+        <div class="dash-card" data-icon="💰"><div class="dc-label">Trade Volume</div><div class="dc-val" id="dVol">—</div><div class="dc-sub">Total invested</div></div>
+        <div class="dash-card" data-icon="⏳"><div class="dc-label">Pending</div><div class="dc-val" style="color:var(--gold)" id="dPend">—</div><div class="dc-sub">Payments</div></div>
+      </div>
+      <div class="g2">
+        <div class="tbl-wrap">
+          <div class="tbl-hdr"><span class="tbl-title">🕒 Recent Trades</span></div>
+          <div style="overflow-x:auto"><table><thead><tr><th>User</th><th>Asset</th><th>Type</th><th>Amount</th><th>Result</th></tr></thead><tbody id="dTradesBody"><tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:20px">Loading…</td></tr></tbody></table></div>
+        </div>
+        <div class="tbl-wrap">
+          <div class="tbl-hdr"><span class="tbl-title">💳 Recent Payments</span></div>
+          <div style="overflow-x:auto"><table><thead><tr><th>User</th><th>Type</th><th>Amount</th><th>Status</th></tr></thead><tbody id="dPayBody"><tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:20px">Loading…</td></tr></tbody></table></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- USERS -->
+    <div class="panel" id="p-users">
+      <div class="tbl-wrap">
+        <div class="tbl-hdr"><span class="tbl-title">👥 Users</span><span id="uCount" style="color:var(--text-secondary);font-size:12px"></span></div>
+        <div style="overflow-x:auto"><table><thead><tr><th>ID</th><th>Username</th><th>Email</th><th>Balance</th><th>Role</th><th>Status</th><th>Joined</th><th>Actions</th></tr></thead><tbody id="uBody"><tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:30px">Loading…</td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- PAYMENTS -->
+    <div class="panel" id="p-payments">
+      <div class="pay-filter">
+        <button class="btn btn-outline btn-sm" onclick="loadPayments('')">All</button>
+        <button class="btn btn-sm" style="background:rgba(245,158,11,.15);color:var(--gold);border:1px solid rgba(245,158,11,.3)" onclick="loadPayments('pending')">⏳ Pending</button>
+        <button class="btn btn-sm" style="background:rgba(0,217,100,.15);color:var(--neon-green);border:1px solid rgba(0,217,100,.3)" onclick="loadPayments('approved')">✅ Approved</button>
+        <button class="btn btn-sm" style="background:rgba(255,59,48,.15);color:var(--neon-red);border:1px solid rgba(255,59,48,.3)" onclick="loadPayments('rejected')">❌ Rejected</button>
+      </div>
+      <div class="tbl-wrap">
+        <div class="tbl-hdr"><span class="tbl-title">💳 Payment Requests</span></div>
+        <div style="overflow-x:auto"><table><thead><tr><th>ID</th><th>User</th><th>Type</th><th>Amount</th><th>UPI / Name</th><th>SS</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead><tbody id="pBody"><tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:30px">Loading…</td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- MARKETS -->
+    <div class="panel" id="p-markets">
+      <div class="card">
+        <div class="card-title">➕ Add Asset</div>
+        <div class="form-row">
+          <div class="fg"><label class="fl">Symbol</label><input class="fi" id="nSym" placeholder="BTC/USDT"></div>
+          <div class="fg"><label class="fl">Name</label><input class="fi" id="nName" placeholder="Bitcoin"></div>
+          <div class="fg"><label class="fl">Category</label><select class="fi" id="nCat"><option value="crypto">Crypto</option><option value="forex">Forex</option><option value="commodity">Commodity</option><option value="stock">Stock</option></select></div>
+          <div class="fg"><label class="fl">Price</label><input class="fi" type="number" id="nPrice" placeholder="0.00"></div>
+          <div class="fg"><label class="fl">Profit %</label><input class="fi" type="number" id="nProfit" value="85"></div>
+          <div class="fg"><label class="fl">Icon</label><input class="fi" id="nIcon" value="🪙" placeholder="🪙"></div>
+        </div>
+        <button class="btn btn-primary" onclick="addAsset()">➕ Add Asset</button>
+      </div>
+      <div class="tbl-wrap">
+        <div class="tbl-hdr"><span class="tbl-title">📈 All Assets</span></div>
+        <div style="overflow-x:auto"><table><thead><tr><th>Icon</th><th>Symbol</th><th>Name</th><th>Cat</th><th>Price</th><th>Profit%</th><th>Status</th><th>Actions</th></tr></thead><tbody id="aBody"><tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:30px">Loading…</td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- TRADES -->
+    <div class="panel" id="p-trades">
+      <div class="tbl-wrap">
+        <div class="tbl-hdr"><span class="tbl-title">📊 All Trades</span><button class="btn btn-outline btn-sm" onclick="loadTrades()">🔄 Refresh</button></div>
+        <div style="overflow-x:auto"><table><thead><tr><th>ID</th><th>User</th><th>Asset</th><th>Type</th><th>Amount</th><th>Result</th><th>P&amp;L</th><th>Time</th><th>Override</th></tr></thead><tbody id="tBody"><tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:30px">Loading…</td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- GRAPH -->
+    <div class="panel" id="p-graph">
+      <div class="g2">
+        <div class="card">
+          <div class="card-title">🎯 Graph Mode Control</div>
+          <div class="fg" style="margin-bottom:14px"><label class="fl">Target Asset</label><select class="fi" id="gAssetSel" onchange="loadGCfg()"><option>BTC/USDT</option></select></div>
+          <div class="fl" style="margin-bottom:8px">Control Mode</div>
+          <div class="mode-row">
+            <div class="mode-btn m-auto" id="mAuto" onclick="setMode('auto')">🤖<br>Auto</div>
+            <div class="mode-btn" id="mManual" onclick="setMode('manual')">🕹️<br>Manual</div>
+            <div class="mode-btn" id="mAi" onclick="setMode('ai')">🧠<br>AI</div>
+          </div>
+          <div id="manCtrls" style="display:none">
+            <div class="fl" style="margin-bottom:8px">Force Direction</div>
+            <div class="dir-row">
+              <div class="dir-btn" id="dUp" onclick="setDir('up')">↑<br>UP</div>
+              <div class="dir-btn dir-neutral" id="dNeutral" onclick="setDir('neutral')">⟺<br>NEUTRAL</div>
+              <div class="dir-btn" id="dDown" onclick="setDir('down')">↓<br>DOWN</div>
+            </div>
+            <div class="fg"><label class="fl">Bias Strength: <span id="biasLbl">50%</span></label><input type="range" style="width:100%;accent-color:var(--accent-blue);cursor:pointer;" id="biasRng" min="0" max="100" value="50" oninput="document.getElementById('biasLbl').textContent=this.value+'%'"></div>
+          </div>
+          <div id="aiInfo" style="display:none;margin-top:12px;background:rgba(0,217,100,.08);border:1px solid rgba(0,217,100,.2);border-radius:8px;padding:12px;font-size:12px;color:var(--text-secondary);">
+            🧠 <strong style="color:var(--neon-green)">AI Mode Active</strong><br>More BUYs → Graph DOWN &nbsp;|&nbsp; More SELLs → Graph UP
+          </div>
+          <button class="btn btn-primary btn-full" style="margin-top:14px" onclick="saveGCfg()">💾 Save Config</button>
+        </div>
+        <div class="card">
+          <div class="card-title">💻 AI Logic Editor</div>
+          <p style="font-size:11px;color:var(--text-secondary);margin-bottom:10px">Variables: <code style="color:var(--accent-blue)">buys</code>, <code style="color:var(--accent-blue)">sells</code>. Return: <code style="color:var(--neon-green)">'up'</code> | <code style="color:var(--neon-red)">'down'</code> | <code style="color:var(--gold)">'neutral'</code></p>
+          <textarea class="code-ed" id="aiCode" rows="9">// Loading...</textarea>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button class="btn btn-success btn-sm" onclick="saveAiCode()">💾 Save Logic</button>
+            <button class="btn btn-outline btn-sm" onclick="resetAiCode()">↺ Reset</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">📊 Live Trade Pressure</div>
+        <div style="display:flex;gap:20px;align-items:center">
+          <div style="flex:1">
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:var(--neon-green);font-weight:700">📈 BUY (CALL)</span><span style="color:var(--neon-green);font-weight:700" id="bCount">0</span></div>
+            <div class="pbar"><div class="pbar-inner" id="bBar" style="width:50%;background:var(--neon-green)"></div></div>
+          </div>
+          <span style="font-size:20px;font-weight:900;color:var(--text-muted)">VS</span>
+          <div style="flex:1">
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:var(--neon-red);font-weight:700">📉 SELL (PUT)</span><span style="color:var(--neon-red);font-weight:700" id="sCount">0</span></div>
+            <div class="pbar"><div class="pbar-inner" id="sBar" style="width:50%;background:var(--neon-red)"></div></div>
+          </div>
+        </div>
+        <div style="text-align:center;margin-top:12px;font-size:13px;color:var(--text-secondary)">AI Rec: <strong id="aiRec" style="color:var(--gold)">—</strong></div>
+      </div>
+    </div>
+
+    <!-- ADS -->
+    <div class="panel" id="p-ads">
+      <div class="card">
+        <div class="card-title">➕ Create Ad</div>
+        <div class="form-row">
+          <div class="fg"><label class="fl">Title</label><input class="fi" id="adTi" placeholder="Ad title"></div>
+          <div class="fg"><label class="fl">Content</label><input class="fi" id="adCo" placeholder="Message"></div>
+          <div class="fg"><label class="fl">Image URL</label><input class="fi" id="adIm" placeholder="https://..."></div>
+          <div class="fg"><label class="fl">Link</label><input class="fi" id="adLk" placeholder="https://..."></div>
+          <div class="fg"><label class="fl">Position</label><select class="fi" id="adPos"><option value="banner">Banner</option><option value="popup">Popup</option><option value="sidebar">Sidebar</option></select></div>
+        </div>
+        <button class="btn btn-primary" onclick="createAd()">➕ Create Ad</button>
+      </div>
+      <div id="adsList"></div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="panel" id="p-settings">
+      <div class="g2">
+        <div class="card">
+          <div class="card-title">💳 Payment Settings</div>
+          <div class="st-row"><div><div class="st-label">Payment Lock</div><div class="st-sub">Disable all deposits & withdrawals</div></div><div class="tog" id="pLockTog" onclick="togglePayLock()"></div></div>
+          <div class="st-row"><div><div class="st-label">Lock Timer (secs)</div><div class="st-sub">0 = no auto-unlock</div></div><input class="fi fi-sm" type="number" id="pLockTimer" value="0" min="0"></div>
+          <div class="st-row"><div><div class="st-label">Min Deposit (₹)</div></div><input class="fi fi-sm" type="number" id="minDep" value="100"></div>
+          <div class="st-row"><div><div class="st-label">Min Withdrawal (₹)</div></div><input class="fi fi-sm" type="number" id="minWd" value="150"></div>
+          <button class="btn btn-primary btn-full" style="margin-top:14px" onclick="savePaySettings()">💾 Save Payment Settings</button>
+        </div>
+        <div class="card">
+          <div class="card-title">🖼️ QR / UPI Settings</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div class="fg"><label class="fl">QR Image URL</label><input class="fi" id="qrUrl" placeholder="https://image.jpg"></div>
+            <div class="fg"><label class="fl">UPI ID</label><input class="fi" id="upiId" placeholder="merchant@upi"></div>
+            <div class="fg"><label class="fl">Site Name</label><input class="fi" id="siteName" placeholder="Ultra Trading"></div>
+            <button class="btn btn-primary" onclick="saveQR()">💾 Save</button>
+          </div>
+          <div id="qrPrev" style="display:none;text-align:center;margin-top:14px"><img id="qrPrevImg" style="width:140px;height:140px;border-radius:8px;border:2px solid var(--border-color)"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">👤 Add Balance to User</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div class="fg"><label class="fl">Select User</label><select class="fi" id="balUserSel"><option>Loading...</option></select></div>
+            <div class="fg"><label class="fl">Amount (₹)</label><input class="fi" type="number" id="balAmt" placeholder="Amount to add"></div>
+            <button class="btn btn-success" onclick="addBal()">➕ Add Balance</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NOTIFICATIONS -->
+    <div class="panel" id="p-notifications">
+      <div class="tbl-wrap">
+        <div class="tbl-hdr"><span class="tbl-title">🔔 Notifications</span><button class="btn btn-outline btn-sm" onclick="markRead()">✓ Mark All Read</button></div>
+        <div id="nList"><div style="text-align:center;padding:30px;color:var(--text-muted)">Loading…</div></div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<script>
+// ── Inline API (no external file needed here) ────────────────────────────────
+const ABASE = '/api';
+const AT = () => localStorage.getItem('ultra_token');
+
+async function api(method, path, body, form) {
+  const h = {'Authorization':'Bearer '+AT()};
+  if(!form) h['Content-Type']='application/json';
+  const r = await fetch(ABASE+path,{method,headers:h,body:body?(form?body:JSON.stringify(body)):undefined});
+  const d = await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(d.error||'Error '+r.status);
+  return d;
+}
+const G = p => api('GET',p);
+const P = (p,b) => api('POST',p,b);
+const Pu = (p,b) => api('PUT',p,b);
+const D = p => api('DELETE',p);
+
+// ── Format helpers ────────────────────────────────────────────────────────────
+const fc = n => '₹'+parseFloat(n||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fp = n => parseFloat(n||0)>100 ? parseFloat(n).toFixed(2) : parseFloat(n||0).toFixed(4);
+const ta = s => {
+  const d=(Date.now()-new Date(s+'Z'))/1000;
+  if(d<60) return Math.floor(d)+'s ago';
+  if(d<3600) return Math.floor(d/60)+'m ago';
+  if(d<86400) return Math.floor(d/3600)+'h ago';
+  return Math.floor(d/86400)+'d ago';
+};
+const fd = s => s?new Date(s).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'2-digit'}):'-';
+
+function toast(msg,type='info'){
+  let c=document.getElementById('tc');
+  if(!c){c=document.createElement('div');c.id='tc';c.style.cssText='position:fixed;top:14px;right:14px;z-index:9999;display:flex;flex-direction:column;gap:8px;';document.body.appendChild(c);}
+  const t=document.createElement('div');
+  const colors={success:'#10b981',error:'#ef4444',info:'#3b82f6',warning:'#f59e0b'};
+  t.style.cssText=`background:${colors[type]||colors.info};color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:700;box-shadow:0 4px 20px rgba(0,0,0,.4);transform:translateX(120%);transition:transform .3s cubic-bezier(.34,1.56,.64,1);max-width:280px;`;
+  t.textContent=msg;c.appendChild(t);
+  requestAnimationFrame(()=>t.style.transform='translateX(0)');
+  setTimeout(()=>{t.style.transform='translateX(120%)';setTimeout(()=>t.remove(),350);},3000);
+}
+
+// ── Auth guard ────────────────────────────────────────────────────────────────
+if(!AT()) window.location.href='/';
+G('/auth/me').then(d=>{
+  if(d.user.role!=='admin'){window.location.href='/trade';return;}
+  document.getElementById('sbName').textContent=d.user.username;
+  localStorage.setItem('ultra_user',JSON.stringify(d.user));
+}).catch(()=>window.location.href='/');
+
+// ── Panel routing ─────────────────────────────────────────────────────────────
+const TITLES={dashboard:'🏠 Dashboard',users:'👥 Users',payments:'💳 Payments',markets:'📈 Markets',trades:'📊 All Trades',graph:'🧠 Graph Control',ads:'📢 Ads',settings:'⚙️ Settings',notifications:'🔔 Notifications'};
+let curPanel='dashboard';
+let allUsers=[];
+
+function go(name){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-lnk').forEach(l=>l.classList.remove('active'));
+  document.getElementById('p-'+name).classList.add('active');
+  document.querySelector(`[onclick="go('${name}')"]`)?.classList.add('active');
+  document.getElementById('tbTitle').textContent=TITLES[name]||name;
+  curPanel=name;
+  const loaders={dashboard:loadDash,users:loadUsers,payments:()=>loadPayments('pending'),markets:loadAssets,trades:loadTrades,graph:loadGraphPanel,ads:loadAds,settings:loadSettings,notifications:loadNotifs};
+  loaders[name]?.();
+}
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+async function loadDash(){
+  try{
+    const d=await G('/admin/dashboard');
+    document.getElementById('dUsers').textContent=d.totalUsers;
+    document.getElementById('dTrades').textContent=d.totalTrades;
+    document.getElementById('dVol').textContent=fc(d.totalVolume||0);
+    document.getElementById('dPend').textContent=d.pendingPayments;
+    if(d.pendingPayments>0){document.getElementById('payBadge').textContent=d.pendingPayments;document.getElementById('payBadge').style.display='';}
+    if(d.unreadNotifs>0){document.getElementById('notifBadge').textContent=d.unreadNotifs;document.getElementById('notifBadge').style.display='';}
+    document.getElementById('dTradesBody').innerHTML=(d.recentTrades||[]).map(t=>`<tr><td>${t.username}</td><td>${t.asset}</td><td style="color:${t.type==='call'?'var(--neon-green)':'var(--neon-red)'}">${t.type.toUpperCase()}</td><td>${fc(t.amount)}</td><td style="color:${t.result==='win'?'var(--neon-green)':t.result==='lose'?'var(--neon-red)':'var(--gold)'}">${t.result.toUpperCase()}</td></tr>`).join('')||'<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:20px">No trades yet</td></tr>';
+    document.getElementById('dPayBody').innerHTML=(d.recentPayments||[]).map(p=>`<tr><td>${p.username}</td><td>${p.type}</td><td>${fc(p.amount)}</td><td class="st-${p.status}">${p.status.toUpperCase()}</td></tr>`).join('')||'<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:20px">No payments yet</td></tr>';
+  }catch(e){toast('Dashboard error: '+e.message,'error');}
+}
+
+// ── Users ─────────────────────────────────────────────────────────────────────
+async function loadUsers(){
+  try{
+    const d=await G('/admin/users');
+    allUsers=d.users;
+    document.getElementById('uCount').textContent=d.users.length+' users';
+    renderUsers(d.users);
+    const sel=document.getElementById('balUserSel');
+    sel.innerHTML=d.users.filter(u=>u.role!=='admin').map(u=>`<option value="${u.id}">${u.username} (${fc(u.balance)})</option>`).join('');
+  }catch(e){toast('Users error','error');}
+}
+
+function renderUsers(users){
+  document.getElementById('uBody').innerHTML=users.map(u=>`
+    <tr>
+      <td>${u.id}</td><td><strong>${u.username}</strong></td>
+      <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis">${u.email||'—'}</td>
+      <td><input class="fi fi-sm" type="number" id="ub_${u.id}" value="${parseFloat(u.balance).toFixed(2)}" style="width:110px"></td>
+      <td style="color:${u.role==='admin'?'var(--gold)':'var(--accent-blue)'};font-weight:700">${u.role}</td>
+      <td>${u.is_active?'<span class="badge bg-green">Active</span>':'<span class="badge bg-red">Banned</span>'}</td>
+      <td>${fd(u.created_at)}</td>
+      <td><div class="act">
+        <button class="ab ab-blue" onclick="saveUserBal(${u.id})">💾</button>
+        <button class="ab ab-gold" onclick="quickAdd(${u.id},1000)">+₹1k</button>
+        <button class="ab ab-blue" onclick="toggleUser(${u.id},${u.is_active})">${u.is_active?'🚫':'✅'}</button>
+        ${u.username!=='admin'?`<button class="ab ab-red" onclick="delUser(${u.id},'${u.username}')">🗑️</button>`:''}
+      </div></td>
+    </tr>`).join('');
+}
+
+async function saveUserBal(id){
+  try{await Pu('/admin/users/'+id,{balance:parseFloat(document.getElementById('ub_'+id).value)});toast('Balance saved','success');}catch(e){toast(e.message,'error');}
+}
+async function quickAdd(id,amt){
+  try{const r=await P('/admin/users/'+id+'/add-balance',{amount:amt});toast('+₹'+amt+' added. New: '+fc(r.new_balance),'success');document.getElementById('ub_'+id).value=parseFloat(r.new_balance).toFixed(2);}catch(e){toast(e.message,'error');}
+}
+async function toggleUser(id,cur){
+  try{await Pu('/admin/users/'+id,{is_active:!cur});toast('Status updated','success');loadUsers();}catch(e){toast(e.message,'error');}
+}
+async function delUser(id,name){
+  if(!confirm('Delete "'+name+'"? Irreversible.'))return;
+  try{await D('/admin/users/'+id);toast('Deleted','success');loadUsers();}catch(e){toast(e.message,'error');}
+}
+function gSearchHandler(){
+  const q=document.getElementById('gSearch').value.toLowerCase();
+  if(curPanel!=='users')go('users');
+  renderUsers(allUsers.filter(u=>u.username.toLowerCase().includes(q)||(u.email||'').toLowerCase().includes(q)));
+}
+
+// ── Payments ──────────────────────────────────────────────────────────────────
+async function loadPayments(status){
+  try{
+    const d=await G('/admin/payments'+(status?'?status='+status:''));
+    document.getElementById('pBody').innerHTML=d.payments.map(p=>`
+      <tr>
+        <td>#${p.id}</td><td><strong>${p.username}</strong></td>
+        <td>${p.type==='deposit'?'<span style="color:var(--neon-green)">⬇️ Dep</span>':'<span style="color:var(--neon-red)">⬆️ Wd</span>'}</td>
+        <td><strong>${fc(p.amount)}</strong></td>
+        <td style="font-size:11px">${p.upi_id||'—'}<br><span style="color:var(--text-muted)">${p.upi_name||''}</span></td>
+        <td>${p.screenshot?`<a href="${p.screenshot}" target="_blank" style="color:var(--accent-blue)">📷</a>`:'—'}</td>
+        <td class="st-${p.status}">${p.status.toUpperCase()}</td>
+        <td style="font-size:11px">${ta(p.created_at)}</td>
+        <td>${p.status==='pending'?`<div class="act"><button class="ab ab-green" onclick="procPay(${p.id},'approve')">✅</button><button class="ab ab-red" onclick="procPay(${p.id},'reject')">❌</button></div>`:'<span style="color:var(--text-muted);font-size:11px">Done</span>'}</td>
+      </tr>`).join('')||'<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:30px">No payments</td></tr>';
+  }catch(e){toast('Failed','error');}
+}
+
+async function procPay(id,action){
+  const note=action==='reject'?prompt('Rejection reason (optional):'):null;
+  try{await Pu('/admin/payments/'+id,{action,admin_note:note||''});toast('Payment '+action+'d','success');loadPayments('pending');loadDash();}catch(e){toast(e.message,'error');}
+}
+
+// ── Assets ────────────────────────────────────────────────────────────────────
+async function loadAssets(){
+  try{
+    const d=await G('/admin/assets');
+    const sel=document.getElementById('gAssetSel');
+    if(sel) sel.innerHTML=d.assets.map(a=>`<option value="${a.symbol}">${a.symbol}</option>`).join('');
+    document.getElementById('aBody').innerHTML=d.assets.map(a=>`
+      <tr>
+        <td style="font-size:20px">${a.icon||'🪙'}</td><td><strong>${a.symbol}</strong></td><td>${a.name}</td>
+        <td><span class="badge bg-muted">${a.category}</span></td>
+        <td><input class="fi fi-sm" type="number" id="ap_${a.id}" value="${a.price}" style="width:110px"></td>
+        <td><input class="fi fi-sm" type="number" id="pf_${a.id}" value="${a.profit_pct}" style="width:70px"></td>
+        <td>${a.is_active?'<span class="badge bg-green">Live</span>':'<span class="badge bg-red">Off</span>'}</td>
+        <td><div class="act">
+          <button class="ab ab-blue" onclick="saveAsset(${a.id})">💾</button>
+          <button class="ab ab-gold" onclick="togAsset(${a.id},${a.is_active})">${a.is_active?'⏸️':'▶️'}</button>
+          <button class="ab ab-red" onclick="delAsset(${a.id},'${a.symbol}')">🗑️</button>
+        </div></td>
+      </tr>`).join('');
+  }catch(e){toast('Failed','error');}
+}
+
+async function addAsset(){
+  const sym=document.getElementById('nSym').value.trim(),name=document.getElementById('nName').value.trim(),cat=document.getElementById('nCat').value,price=document.getElementById('nPrice').value,profit=document.getElementById('nProfit').value,icon=document.getElementById('nIcon').value;
+  if(!sym||!name||!price){toast('Symbol, name, price required','error');return;}
+  try{await P('/admin/assets',{symbol:sym,name,category:cat,price:parseFloat(price),profit_pct:parseFloat(profit||85),icon:icon||'🪙'});toast('Asset added','success');['nSym','nName','nPrice'].forEach(id=>document.getElementById(id).value='');loadAssets();}catch(e){toast(e.message,'error');}
+}
+async function saveAsset(id){
+  try{await Pu('/admin/assets/'+id,{price:parseFloat(document.getElementById('ap_'+id).value),profit_pct:parseFloat(document.getElementById('pf_'+id).value)});toast('Saved','success');}catch(e){toast(e.message,'error');}
+}
+async function togAsset(id,active){try{await Pu('/admin/assets/'+id,{is_active:!active});loadAssets();}catch(e){toast(e.message,'error');}}
+async function delAsset(id,sym){if(!confirm('Delete '+sym+'?'))return;try{await D('/admin/assets/'+id);toast('Deleted','success');loadAssets();}catch(e){toast(e.message,'error');}}
+
+// ── All Trades ────────────────────────────────────────────────────────────────
+async function loadTrades(){
+  try{
+    const d=await G('/admin/dashboard');
+    document.getElementById('tBody').innerHTML=(d.recentTrades||[]).map(t=>`
+      <tr>
+        <td>#${t.id}</td><td>${t.username}</td><td>${t.asset}</td>
+        <td style="color:${t.type==='call'?'var(--neon-green)':'var(--neon-red)'};font-weight:700">${t.type.toUpperCase()}</td>
+        <td>${fc(t.amount)}</td>
+        <td style="color:${t.result==='win'?'var(--neon-green)':t.result==='lose'?'var(--neon-red)':'var(--gold)'};font-weight:700">${t.result.toUpperCase()}</td>
+        <td style="color:${(t.pnl||0)>=0?'var(--neon-green)':'var(--neon-red)'}">${fc(t.pnl||0)}</td>
+        <td>${ta(t.created_at)}</td>
+        <td>${t.result==='pending'?`<div class="act"><button class="ab ab-green" onclick="ovTrade(${t.id},'win')">✅ Win</button><button class="ab ab-red" onclick="ovTrade(${t.id},'lose')">❌ Lose</button></div>`:'—'}</td>
+      </tr>`).join('')||'<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:30px">No trades</td></tr>';
+  }catch(e){toast('Failed','error');}
+}
+async function ovTrade(id,result){
+  if(!confirm('Force trade #'+id+' to '+result.toUpperCase()+'?'))return;
+  try{await Pu('/admin/trade/'+id+'/result',{result});toast('Trade set to '+result,'success');loadTrades();}catch(e){toast(e.message,'error');}
+}
+
+// ── Graph Control ─────────────────────────────────────────────────────────────
+let gMode='auto',gDir='neutral',gAsset='BTC/USDT';
+async function loadGraphPanel(){
+  loadAssets();
+  try{const d=await G('/admin/settings');if(d.ai_logic)document.getElementById('aiCode').value=d.ai_logic;}catch(e){}
+  loadGCfg(); refreshPressure();
+}
+async function loadGCfg(){
+  gAsset=document.getElementById('gAssetSel')?.value||'BTC/USDT';
+  try{
+    const r=await fetch('/api/graph/config/'+encodeURIComponent(gAsset),{headers:{Authorization:'Bearer '+AT()}});
+    const c=await r.json();
+    gMode=c.mode||'auto'; gDir=c.manual_direction||'neutral';
+    document.getElementById('biasRng').value=(c.bias_strength||0.5)*100;
+    document.getElementById('biasLbl').textContent=Math.round((c.bias_strength||0.5)*100)+'%';
+    updModeUI(); updDirUI();
+  }catch(e){}
+}
+function setMode(m){gMode=m;updModeUI();}
+function updModeUI(){
+  ['auto','manual','ai'].forEach(m=>{
+    const el=document.getElementById('m'+m.charAt(0).toUpperCase()+m.slice(1));
+    if(el){el.className='mode-btn'+(m===gMode?' m-'+m:'');}
+  });
+  document.getElementById('manCtrls').style.display=gMode==='manual'?'block':'none';
+  document.getElementById('aiInfo').style.display=gMode==='ai'?'block':'none';
+}
+function setDir(d){gDir=d;updDirUI();}
+function updDirUI(){
+  ['up','neutral','down'].forEach(d=>{
+    const el=document.getElementById('d'+d.charAt(0).toUpperCase()+d.slice(1));
+    if(el) el.className='dir-btn'+(d===gDir?' dir-'+d:'');
+  });
+}
+async function saveGCfg(){
+  const bias=parseInt(document.getElementById('biasRng').value)/100;
+  const aiCode=document.getElementById('aiCode').value;
+  try{await Pu('/admin/graph/'+encodeURIComponent(gAsset),{mode:gMode,manual_direction:gDir,bias_strength:bias,ai_logic:aiCode});toast('Graph config saved ✓','success');}catch(e){toast(e.message,'error');}
+}
+async function saveAiCode(){
+  const logic=document.getElementById('aiCode').value;
+  try{await Pu('/admin/settings',{ai_logic:logic});await Pu('/admin/graph/'+encodeURIComponent(gAsset),{ai_logic:logic});toast('AI logic saved ✓','success');}catch(e){toast(e.message,'error');}
+}
+function resetAiCode(){
+  document.getElementById('aiCode').value=`// AI Graph Logic\n// buys = CALL trades last hour\n// sells = PUT trades last hour\nfunction aiTrend(buys, sells) {\n  if (buys > sells * 1.2) return 'down'; // contrarian\n  if (sells > buys * 1.2) return 'up';\n  return 'neutral';\n}`;
+  toast('Reset to default','info');
+}
+async function refreshPressure(){
+  try{
+    const d=await G('/admin/dashboard');
+    const trades=d.recentTrades||[];
+    const buys=trades.filter(t=>t.type==='call').length, sells=trades.filter(t=>t.type==='put').length;
+    const tot=Math.max(1,buys+sells);
+    document.getElementById('bCount').textContent=buys; document.getElementById('sCount').textContent=sells;
+    document.getElementById('bBar').style.width=(buys/tot*100)+'%'; document.getElementById('sBar').style.width=(sells/tot*100)+'%';
+    document.getElementById('aiRec').textContent=buys>sells*1.2?'📉 Graph DOWN':sells>buys*1.2?'📈 Graph UP':'⟺ Neutral';
+  }catch(e){}
+}
+
+// ── Ads ───────────────────────────────────────────────────────────────────────
+async function loadAds(){
+  try{
+    const d=await G('/admin/ads');
+    document.getElementById('adsList').innerHTML=d.ads.length?d.ads.map(a=>`
+      <div class="ad-card">
+        ${a.image_url?`<img src="${a.image_url}" style="width:50px;height:50px;border-radius:6px;object-fit:cover">`:'<div style="width:50px;height:50px;background:var(--bg-deep);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:22px">📢</div>'}
+        <div class="ad-info"><div style="font-size:13px;font-weight:700">${a.title}</div><div style="font-size:11px;color:var(--text-secondary)">${a.content||'—'} · ${a.position}</div></div>
+        <div class="act">
+          <button class="ab ${a.is_active?'ab-gold':'ab-green'}" onclick="togAd(${a.id})">${a.is_active?'⏸️':'▶️'}</button>
+          <button class="ab ab-red" onclick="delAd(${a.id})">🗑️</button>
+        </div>
+      </div>`).join(''):'<div style="text-align:center;padding:30px;color:var(--text-muted)">No ads yet</div>';
+  }catch(e){toast('Failed','error');}
+}
+async function createAd(){
+  const title=document.getElementById('adTi').value.trim();
+  if(!title){toast('Title required','error');return;}
+  try{await P('/admin/ads',{title,content:document.getElementById('adCo').value,image_url:document.getElementById('adIm').value,link:document.getElementById('adLk').value,position:document.getElementById('adPos').value});toast('Ad created','success');['adTi','adCo','adIm','adLk'].forEach(id=>document.getElementById(id).value='');loadAds();}catch(e){toast(e.message,'error');}
+}
+async function togAd(id){try{await Pu('/admin/ads/'+id+'/toggle',{});loadAds();}catch(e){toast(e.message,'error');}}
+async function delAd(id){if(!confirm('Delete ad?'))return;try{await D('/admin/ads/'+id);loadAds();}catch(e){toast(e.message,'error');}}
+
+// ── Settings ──────────────────────────────────────────────────────────────────
+let payLock=false;
+async function loadSettings(){
+  try{
+    const d=await G('/admin/settings');
+    payLock=d.payment_lock==='true';
+    document.getElementById('pLockTog').className='tog'+(payLock?' on':'');
+    document.getElementById('pLockTimer').value=d.payment_lock_timer||0;
+    document.getElementById('minDep').value=d.deposit_min||100;
+    document.getElementById('minWd').value=d.withdraw_min||150;
+    document.getElementById('qrUrl').value=d.qr_image||'';
+    document.getElementById('upiId').value=d.upi_id||'';
+    document.getElementById('siteName').value=d.site_name||'Ultra Trading';
+    if(d.qr_image){document.getElementById('qrPrev').style.display='block';document.getElementById('qrPrevImg').src=d.qr_image;}
+    loadUsers();
+  }catch(e){toast('Settings load failed','error');}
+}
+function togglePayLock(){payLock=!payLock;document.getElementById('pLockTog').className='tog'+(payLock?' on':'');}
+async function savePaySettings(){
+  try{await Pu('/admin/settings',{payment_lock:String(payLock),payment_lock_timer:document.getElementById('pLockTimer').value,deposit_min:document.getElementById('minDep').value,withdraw_min:document.getElementById('minWd').value});toast('Payment settings saved ✓','success');}catch(e){toast(e.message,'error');}
+}
+async function saveQR(){
+  const qr=document.getElementById('qrUrl').value;
+  try{await Pu('/admin/settings',{qr_image:qr,upi_id:document.getElementById('upiId').value,site_name:document.getElementById('siteName').value});toast('QR settings saved ✓','success');if(qr){document.getElementById('qrPrev').style.display='block';document.getElementById('qrPrevImg').src=qr;}}catch(e){toast(e.message,'error');}
+}
+async function addBal(){
+  const uid=document.getElementById('balUserSel').value,amt=document.getElementById('balAmt').value;
+  if(!uid||!amt||parseFloat(amt)<=0){toast('Select user and valid amount','error');return;}
+  try{const r=await P('/admin/users/'+uid+'/add-balance',{amount:parseFloat(amt)});toast('+₹'+amt+' added. Balance: '+fc(r.new_balance),'success');document.getElementById('balAmt').value='';loadUsers();}catch(e){toast(e.message,'error');}
+}
+
+// ── Notifications ─────────────────────────────────────────────────────────────
+async function loadNotifs(){
+  try{
+    const d=await G('/admin/notifications');
+    document.getElementById('notifBadge').style.display='none';
+    document.getElementById('nList').innerHTML=d.notifications.length?d.notifications.map(n=>`
+      <div class="notif-item ${n.is_read?'':'unread'}">
+        <div style="font-size:22px">${n.type==='payment'?'💳':'🔔'}</div>
+        <div><div class="notif-ti">${n.title}</div><div class="notif-msg">${n.message||''}</div><div class="notif-ts">${ta(n.created_at)}</div></div>
+      </div>`).join(''):'<div style="text-align:center;padding:40px;color:var(--text-muted)">No notifications</div>';
+  }catch(e){toast('Failed','error');}
+}
+async function markRead(){try{await Pu('/admin/notifications/read-all',{});toast('All read','success');loadNotifs();}catch(e){toast(e.message,'error');}}
+function logout(){localStorage.removeItem('ultra_token');localStorage.removeItem('ultra_user');window.location.href='/';}
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+loadDash();
+setInterval(loadDash,30000);
+setInterval(()=>{if(curPanel==='graph')refreshPressure();},5000);
+</script>
+</body>
+</html>
