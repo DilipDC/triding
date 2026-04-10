@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#050814">
+  <title>Ultra Trading – Trade</title>
+  <link rel="stylesheet" href="../assets/css/shared.css">
+  <style>
+    body { display: flex; flex-direction: column; height: 100vh; height: 100dvh; overflow: hidden; animation: pageEnter 0.4s ease; }
+
+    /* ── Header ─────────────────────────────────────────────── */
+    .header { background: var(--bg-surface); display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--border-color); z-index: 10; gap: 10px; flex-shrink: 0; }
+    .header-left { display: flex; align-items: center; gap: 8px; }
+    .header-right { display: flex; align-items: center; gap: 8px; }
+
+    .asset-selector { display: flex; align-items: center; gap: 8px; background: var(--bg-elevated); padding: 8px 14px; border-radius: var(--radius-md); cursor: pointer; border: 1px solid var(--border-color); transition: var(--transition); user-select: none; }
+    .asset-selector:active { transform: scale(0.97); }
+    .asset-icon { font-size: 20px; }
+    .asset-name { font-size: 15px; font-weight: 800; }
+    .asset-change { font-size: 12px; }
+
+    .balance-badge { display: flex; flex-direction: column; align-items: flex-end; }
+    .balance-label { font-size: 10px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
+    .balance-value { font-size: 15px; font-weight: 800; color: var(--neon-green); }
+
+    .icon-btn { background: var(--bg-elevated); border: 1px solid var(--border-color); width: 36px; height: 36px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 18px; transition: var(--transition); color: var(--text-primary); }
+    .icon-btn:active { transform: scale(0.9); }
+
+    /* ── Chart ───────────────────────────────────────────────── */
+    .chart-wrapper { flex: 1; position: relative; overflow: hidden; background: var(--bg-deep); touch-action: none; }
+    canvas { display: block; width: 100%; height: 100%; }
+
+    /* Chart overlay UI */
+    .chart-overlay { position: absolute; top: 0; left: 0; right: 0; pointer-events: none; padding: 12px 14px; display: flex; justify-content: space-between; align-items: flex-start; z-index: 5; }
+    .price-display { display: flex; flex-direction: column; }
+    .live-price { font-size: 26px; font-weight: 900; line-height: 1; letter-spacing: -1px; transition: color 0.3s; }
+    .price-change { font-size: 13px; font-weight: 600; margin-top: 2px; }
+    .chart-type-btns { display: flex; gap: 6px; pointer-events: auto; }
+    .chart-type-btn { background: rgba(10,15,30,0.7); border: 1px solid var(--border-color); color: var(--text-secondary); padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: var(--transition); backdrop-filter: blur(8px); }
+    .chart-type-btn.active { border-color: var(--accent-blue); color: var(--accent-blue); }
+
+    /* Candlestick crosshair */
+    .crosshair { position: absolute; pointer-events: none; z-index: 4; display: none; }
+    .crosshair-h { position: absolute; left: 0; right: 0; height: 1px; background: rgba(255,255,255,0.15); }
+    .crosshair-v { position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(255,255,255,0.15); }
+    .crosshair-label { position: absolute; background: var(--accent-blue); color: #fff; font-size: 11px; font-weight: 700; padding: 3px 7px; border-radius: 4px; white-space: nowrap; }
+
+    /* Active trade indicator */
+    .active-trade-bar { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(28,104,255,0.2), transparent); padding: 8px 14px; display: none; z-index: 4; }
+    .active-trade-bar.show { display: flex; align-items: center; justify-content: space-between; }
+    .trade-timer { display: flex; align-items: center; gap: 8px; }
+    .timer-ring { width: 32px; height: 32px; }
+    .timer-text { font-size: 13px; font-weight: 700; }
+
+    /* ── Controls Panel ───────────────────────────────────────── */
+    .controls-panel { background: var(--bg-surface); border-top: 1px solid var(--border-color); padding: 14px 14px 10px; display: flex; flex-direction: column; gap: 12px; flex-shrink: 0; z-index: 10; }
+
+    .control-row { display: flex; gap: 10px; }
+    .control-box { flex: 1; background: var(--bg-elevated); border: 1px solid var(--border-color); border-radius: var(--radius-md); display: flex; align-items: center; padding: 8px 10px; gap: 6px; }
+    .ctrl-label { font-size: 10px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; display: block; }
+    .ctrl-value { font-size: 16px; font-weight: 800; color: var(--text-primary); display: block; }
+    .ctrl-btn { background: transparent; color: var(--text-secondary); font-size: 20px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: var(--transition); border-radius: 4px; }
+    .ctrl-btn:active { transform: scale(0.8); background: var(--border-color); }
+    .ctrl-center { flex: 1; text-align: center; }
+
+    /* Profit %, One-click */
+    .profit-box { background: linear-gradient(135deg, rgba(0,217,100,0.1), rgba(0,217,100,0.05)); border-color: rgba(0,217,100,0.2); }
+    .profit-box .ctrl-value { color: var(--neon-green); }
+
+    /* ── Trade Buttons ────────────────────────────────────────── */
+    .trade-btns { display: flex; gap: 10px; }
+    .trade-btn {
+      flex: 1; padding: 14px 10px; border-radius: var(--radius-md);
+      display: flex; justify-content: space-between; align-items: center;
+      color: white; font-weight: 800; transition: var(--transition); position: relative; overflow: hidden;
+    }
+    .trade-btn:active { transform: scale(0.95); }
+    .btn-put { background: linear-gradient(135deg, #c0392b, #ea4335); box-shadow: 0 6px 20px rgba(234,67,53,0.4); }
+    .btn-call { background: linear-gradient(135deg, #1e8449, #34a853); box-shadow: 0 6px 20px rgba(52,168,83,0.4); }
+    .btn-put:active { box-shadow: none; }
+    .btn-call:active { box-shadow: none; }
+    @keyframes pulseRed { 0%,100%{box-shadow:0 6px 20px rgba(234,67,53,0.4)} 50%{box-shadow:0 6px 30px rgba(234,67,53,0.8),0 0 40px rgba(234,67,53,0.3)} }
+    @keyframes pulseGreen { 0%,100%{box-shadow:0 6px 20px rgba(52,168,83,0.4)} 50%{box-shadow:0 6px 30px rgba(52,168,83,0.8),0 0 40px rgba(52,168,83,0.3)} }
+    .btn-put.pulse { animation: pulseRed 0.6s; }
+    .btn-call.pulse { animation: pulseGreen 0.6s; }
+    .btn-side { font-size: 24px; font-weight: 900; }
+    .btn-info { text-align: right; }
+    .btn-info span { display: block; font-size: 10px; opacity: 0.8; margin-bottom: 2px; }
+    .btn-info strong { font-size: 13px; }
+
+    /* ── Bottom Navigation ────────────────────────────────────── */
+
+    /* ── Asset Bottom Sheet ───────────────────────────────────── */
+    .bottom-sheet { position: fixed; inset: 0; z-index: 150; }
+    .bs-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(6px); }
+    .bs-panel { position: absolute; bottom: 0; left: 0; right: 0; background: var(--bg-surface); border-radius: var(--radius-xl) var(--radius-xl) 0 0; max-height: 75vh; display: flex; flex-direction: column; transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1); padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+    .bottom-sheet.active .bs-panel { transform: translateY(0); }
+    .bs-handle { width: 40px; height: 4px; background: var(--border-color); border-radius: 2px; margin: 14px auto 0; flex-shrink: 0; }
+    .bs-header { padding: 14px 16px 10px; flex-shrink: 0; }
+    .bs-title { font-size: 16px; font-weight: 800; margin-bottom: 12px; }
+    .bs-search { display: flex; align-items: center; background: var(--bg-elevated); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 10px 14px; gap: 8px; }
+    .bs-search input { flex: 1; background: transparent; color: var(--text-primary); font-size: 14px; }
+    .bs-categories { display: flex; gap: 8px; padding: 10px 16px 0; overflow-x: auto; flex-shrink: 0; scrollbar-width: none; }
+    .cat-btn { padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; background: var(--bg-elevated); border: 1px solid var(--border-color); color: var(--text-secondary); white-space: nowrap; cursor: pointer; transition: var(--transition); }
+    .cat-btn.active { background: var(--accent-blue); border-color: var(--accent-blue); color: #fff; }
+    .bs-list { flex: 1; overflow-y: auto; padding: 8px 0; }
+    .asset-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; cursor: pointer; transition: var(--transition); border-bottom: 1px solid var(--border-light); }
+    .asset-item:active { background: var(--bg-elevated); }
+    .asset-item-icon { font-size: 24px; width: 40px; height: 40px; background: var(--bg-elevated); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .asset-item-info { flex: 1; }
+    .asset-item-symbol { font-size: 14px; font-weight: 800; }
+    .asset-item-name { font-size: 11px; color: var(--text-secondary); }
+    .asset-item-right { text-align: right; }
+    .asset-item-price { font-size: 13px; font-weight: 700; }
+    .asset-item-change { font-size: 11px; font-weight: 700; }
+    .asset-item-profit { font-size: 11px; font-weight: 600; color: var(--neon-green); }
+
+    /* ── Trade Result Toast ───────────────────────────────────── */
+    .result-splash { position: fixed; inset: 0; z-index: 300; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.85); backdrop-filter: blur(20px); display: none; }
+    .result-splash.show { display: flex; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+    .result-card { background: var(--bg-surface); border-radius: var(--radius-xl); padding: 36px 32px; text-align: center; max-width: 280px; border: 1px solid var(--border-color); animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    @keyframes popIn { from{transform:scale(0.5);opacity:0} to{transform:scale(1);opacity:1} }
+    .result-icon { font-size: 64px; display: block; margin-bottom: 12px; }
+    .result-title { font-size: 28px; font-weight: 900; margin-bottom: 8px; }
+    .result-amount { font-size: 18px; font-weight: 700; }
+    .result-close { margin-top: 20px; }
+
+    /* ── Profit payout selector ─────────────────────────────── */
+    .profit-pct { font-size: 22px; font-weight: 900; color: var(--neon-green); }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <div class="asset-selector" id="assetSelectorBtn">
+        <span class="asset-icon" id="hdrAssetIcon">₿</span>
+        <div>
+          <div class="asset-name" id="hdrAssetName">BTC/USDT</div>
+          <div class="asset-change text-green" id="hdrAssetChange">+0.00%</div>
+        </div>
+        <span style="color:var(--text-muted);font-size:14px">▾</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="balance-badge">
+        <span class="balance-label">Balance</span>
+        <span class="balance-value" id="headerBalance">₹0.00</span>
+      </div>
+      <button class="icon-btn" id="themeBtn" title="Toggle theme">🌙</button>
+      <button class="icon-btn" onclick="window.location.href='/profile'">👤</button>
+    </div>
+  </header>
+
+  <!-- Chart -->
+  <div class="chart-wrapper" id="chartWrapper">
+    <canvas id="tradingCanvas"></canvas>
+
+    <div class="chart-overlay">
+      <div class="price-display">
+        <span class="live-price" id="livePrice">67,842.50</span>
+        <span class="price-change text-green" id="priceChange">+2.3%</span>
+      </div>
+      <div class="chart-type-btns">
+        <button class="chart-type-btn active" data-type="area" onclick="setChartType('area',this)">Area</button>
+        <button class="chart-type-btn" data-type="candle" onclick="setChartType('candle',this)">Candle</button>
+        <button class="chart-type-btn" data-type="line" onclick="setChartType('line',this)">Line</button>
+      </div>
+    </div>
+
+    <div class="crosshair" id="crosshair">
+      <div class="crosshair-h" id="chH"></div>
+      <div class="crosshair-v" id="chV"></div>
+      <div class="crosshair-label" id="chLabel"></div>
+    </div>
+
+    <div class="active-trade-bar" id="activeTradeBar">
+      <div class="trade-timer">
+        <svg class="timer-ring" viewBox="0 0 32 32">
+          <circle cx="16" cy="16" r="13" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="3"/>
+          <circle cx="16" cy="16" r="13" fill="none" stroke="var(--accent-blue)" stroke-width="3" stroke-linecap="round" stroke-dasharray="81.68" stroke-dashoffset="0" id="timerCircle" style="transform:rotate(-90deg);transform-origin:50% 50%;transition:stroke-dashoffset 1s linear;"/>
+        </svg>
+        <span class="timer-text" id="tradeTimerText">--:--</span>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:11px;color:var(--text-muted)">Active Trade</div>
+        <div style="font-size:14px;font-weight:800;" id="tradeTypeLabel">--</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Controls Panel -->
+  <div class="controls-panel">
+    <div class="control-row">
+      <div class="control-box">
+        <button class="ctrl-btn" id="btnInvestMinus">−</button>
+        <div class="ctrl-center">
+          <span class="ctrl-label">Amount</span>
+          <span class="ctrl-value" id="valInvest">₹100</span>
+        </div>
+        <button class="ctrl-btn" id="btnInvestPlus">+</button>
+      </div>
+      <div class="control-box">
+        <button class="ctrl-btn" id="btnTimeMinus">−</button>
+        <div class="ctrl-center">
+          <span class="ctrl-label">Duration</span>
+          <span class="ctrl-value" id="valTime">1 min</span>
+        </div>
+        <button class="ctrl-btn" id="btnTimePlus">+</button>
+      </div>
+      <div class="control-box profit-box" style="max-width:90px;">
+        <div class="ctrl-center">
+          <span class="ctrl-label">Profit</span>
+          <span class="ctrl-value profit-pct" id="valProfit">85%</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="trade-btns">
+      <button class="trade-btn btn-put" id="putBtn">
+        <span class="btn-side">↓</span>
+        <div class="btn-info">
+          <span>SELL / PUT</span>
+          <strong id="putPayout">₹85</strong>
+        </div>
+      </button>
+      <button class="trade-btn btn-call" id="callBtn">
+        <div class="btn-info" style="text-align:left;">
+          <span>BUY / CALL</span>
+          <strong id="callPayout">₹85</strong>
+        </div>
+        <span class="btn-side">↑</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Bottom Nav -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" onclick="location.href='/trade'"><span class="nav-icon">📊</span>Trade</button>
+    <button class="nav-item" onclick="location.href='/markets'"><span class="nav-icon">📈</span>Markets</button>
+    <button class="nav-item" onclick="location.href='/history'"><span class="nav-icon">📜</span>History</button>
+    <button class="nav-item" onclick="location.href='/profile'"><span class="nav-icon">👤</span>Profile</button>
+  </nav>
+
+  <!-- Asset Bottom Sheet -->
+  <div class="bottom-sheet" id="assetSheet" style="display:none;">
+    <div class="bs-overlay" onclick="closeAssetSheet()"></div>
+    <div class="bs-panel">
+      <div class="bs-handle"></div>
+      <div class="bs-header">
+        <div class="bs-title">Select Asset</div>
+        <div class="bs-search">
+          <span>🔍</span>
+          <input type="text" id="assetSearch" placeholder="Search symbol or name..." oninput="loadAssets()">
+        </div>
+      </div>
+      <div class="bs-categories" id="catBtns">
+        <button class="cat-btn active" data-cat="all" onclick="selectCat('all',this)">All</button>
+        <button class="cat-btn" data-cat="crypto" onclick="selectCat('crypto',this)">🪙 Crypto</button>
+        <button class="cat-btn" data-cat="forex" onclick="selectCat('forex',this)">💱 Forex</button>
+        <button class="cat-btn" data-cat="commodity" onclick="selectCat('commodity',this)">🥇 Commodity</button>
+        <button class="cat-btn" data-cat="stock" onclick="selectCat('stock',this)">📈 Stocks</button>
+      </div>
+      <div class="bs-list" id="assetList"><div style="padding:40px;text-align:center;color:var(--text-muted)">Loading...</div></div>
+    </div>
+  </div>
+
+  <!-- Trade Result Splash -->
+  <div class="result-splash" id="resultSplash">
+    <div class="result-card">
+      <span class="result-icon" id="resultIcon">🏆</span>
+      <div class="result-title" id="resultTitle">WIN!</div>
+      <div class="result-amount" id="resultAmount">+₹85.00</div>
+      <button class="btn btn-primary result-close btn-full" onclick="closeResult()">Continue Trading</button>
+    </div>
+  </div>
+
+  <script src="../assets/js/api.js"></script>
+  <script>
+  // ── Auth guard ──────────────────────────────────────────────────────────────
+  if (!UltraAPI.token) window.location.href = '/';
+
+  // ── State ───────────────────────────────────────────────────────────────────
+  let currentAsset = { symbol: 'BTC/USDT', name: 'Bitcoin', price: 67842.50, profit_pct: 85, icon: '₿', change_pct: 2.3 };
+  let investAmount = 100, tradeDuration = 1, currentCat = 'all';
+  let chartType = 'area', scaleX = 1.0, panX = 0;
+  let chartData = [], isDragging = false, lastX = 0, lastY = 0;
+  let activeTrade = null, tradeTimerInterval = null;
+  let priceHistory = [];
+  const MAX_POINTS = 300;
+
+  // ── Canvas chart engine ─────────────────────────────────────────────────────
+  const canvas = document.getElementById('tradingCanvas');
+  const ctx = canvas.getContext('2d');
+
+  function initChartData(basePrice) {
+    chartData = [];
+    let p = basePrice * 0.97;
+    for (let i = 0; i < 200; i++) {
+      const v = p * 0.004;
+      const o = p, c = o + (Math.random() - 0.48) * v;
+      const h = Math.max(o, c) + Math.random() * v * 0.5;
+      const l = Math.min(o, c) - Math.random() * v * 0.5;
+      chartData.push({ open: o, high: h, low: l, close: c, ts: Date.now() - (200 - i) * 2000 });
+      p = c;
+    }
+    panX = -(chartData.length * 16 - (canvas.parentElement.clientWidth - 60));
+  }
+
+  function appendTick(price) {
+    const last = chartData[chartData.length - 1];
+    const newCandle = { open: last?.close || price, high: price, low: price, close: price, ts: Date.now() };
+    if (chartData.length > 0 && Date.now() - last.ts < 2000) {
+      last.close = price;
+      last.high = Math.max(last.high, price);
+      last.low = Math.min(last.low, price);
+    } else {
+      chartData.push(newCandle);
+      if (chartData.length > MAX_POINTS) chartData.shift();
+    }
+  }
+
+  function drawChart() {
+    const w = canvas.width = canvas.parentElement.clientWidth;
+    const h = canvas.height = canvas.parentElement.clientHeight;
+    ctx.clearRect(0, 0, w, h);
+
+    const style = getComputedStyle(document.documentElement);
+    const upColor = '#00d964', downColor = '#ff3b30', lineColor = style.getPropertyValue('--accent-blue').trim() || '#1c68ff';
+    const gridColor = 'rgba(142,155,190,0.08)';
+
+    const cW = 10 * scaleX, spacing = cW * 1.4;
+    const visible = chartData.filter((_, i) => {
+      const x = panX + i * spacing;
+      return x > -spacing && x < w;
+    });
+    if (!visible.length) return;
+
+    const prices = visible.flatMap(d => [d.high, d.low]);
+    const minP = Math.min(...prices) * 0.9995;
+    const maxP = Math.max(...prices) * 1.0005;
+    const range = maxP - minP || 1;
+    const getY = v => h - ((v - minP) / range) * h * 0.88 - h * 0.06;
+
+    // Grid lines
+    ctx.strokeStyle = gridColor; ctx.lineWidth = 1;
+    for (let i = 1; i < 5; i++) {
+      const y = (h / 5) * i;
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+      const pVal = maxP - (range * i / 5);
+      ctx.fillStyle = 'rgba(142,155,190,0.4)'; ctx.font = '10px system-ui';
+      ctx.fillText(fmt.price(pVal), 4, y - 3);
+    }
+
+    // Draw chart
+    if (chartType === 'area' || chartType === 'line') {
+      ctx.beginPath();
+      chartData.forEach((d, i) => {
+        const x = panX + i * spacing + spacing / 2;
+        if (i === 0 || panX + 0 * spacing < -spacing) { ctx.moveTo(x, getY(d.close)); }
+        else ctx.lineTo(x, getY(d.close));
+      });
+      ctx.strokeStyle = lineColor; ctx.lineWidth = 2.5; ctx.lineJoin = 'round'; ctx.stroke();
+
+      if (chartType === 'area') {
+        const firstX = panX + 0 * spacing + spacing / 2;
+        const lastX = panX + (chartData.length - 1) * spacing + spacing / 2;
+        const lastY = getY(chartData[chartData.length - 1].close);
+        ctx.lineTo(lastX, h); ctx.lineTo(firstX, h);
+        const grad = ctx.createLinearGradient(0, 0, 0, h);
+        grad.addColorStop(0, lineColor + '50'); grad.addColorStop(0.7, lineColor + '10'); grad.addColorStop(1, 'transparent');
+        ctx.fillStyle = grad; ctx.fill();
+      }
+    } else {
+      chartData.forEach((d, i) => {
+        const x = panX + i * spacing;
+        if (x > w || x + cW < 0) return;
+        const isUp = d.close >= d.open;
+        const color = isUp ? upColor : downColor;
+        ctx.fillStyle = ctx.strokeStyle = color; ctx.lineWidth = 1;
+        const yOpen = getY(d.open), yClose = getY(d.close), yHigh = getY(d.high), yLow = getY(d.low);
+        // Wick
+        ctx.beginPath(); ctx.moveTo(x + cW / 2, yHigh); ctx.lineTo(x + cW / 2, yLow); ctx.stroke();
+        // Body
+        const bodyH = Math.max(1, Math.abs(yOpen - yClose));
+        ctx.fillRect(x, Math.min(yOpen, yClose), cW, bodyH);
+      });
+    }
+
+    // Current price line
+    const lastCandle = chartData[chartData.length - 1];
+    if (lastCandle) {
+      const py = getY(lastCandle.close);
+      ctx.setLineDash([6, 4]); ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(0, py); ctx.lineTo(w, py); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = lineColor; ctx.fillRect(w - 72, py - 11, 70, 22); ctx.beginPath(); ctx.moveTo(w - 72, py - 11); ctx.lineTo(w - 82, py); ctx.lineTo(w - 72, py + 11); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText(fmt.price(lastCandle.close), w - 37, py + 4);
+      ctx.textAlign = 'left';
+    }
+  }
+
+  // ── Touch pan & zoom ────────────────────────────────────────────────────────
+  let pinchDist = 0;
+  canvas.addEventListener('touchstart', e => {
+    if (e.touches.length === 1) { isDragging = true; lastX = e.touches[0].clientX; }
+    if (e.touches.length === 2) { pinchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); }
+  }, { passive: true });
+  canvas.addEventListener('touchmove', e => {
+    if (e.touches.length === 1 && isDragging) { panX += e.touches[0].clientX - lastX; lastX = e.touches[0].clientX; drawChart(); }
+    if (e.touches.length === 2) {
+      const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+      scaleX = Math.max(0.3, Math.min(4, scaleX * (d / pinchDist))); pinchDist = d; drawChart();
+    }
+  }, { passive: true });
+  canvas.addEventListener('touchend', () => isDragging = false, { passive: true });
+
+  // Mouse crosshair (desktop)
+  canvas.addEventListener('mousemove', e => {
+    const ch = document.getElementById('crosshair');
+    ch.style.display = 'block';
+    document.getElementById('chH').style.top = e.offsetY + 'px';
+    document.getElementById('chV').style.left = e.offsetX + 'px';
+    const lbl = document.getElementById('chLabel');
+    lbl.style.top = (e.offsetY - 20) + 'px'; lbl.style.left = (e.offsetX + 10) + 'px';
+    // Find closest candle
+    const spacing = 10 * scaleX * 1.4;
+    const idx = Math.round((e.offsetX - panX) / spacing);
+    if (chartData[idx]) lbl.textContent = fmt.price(chartData[idx].close);
+  });
+  canvas.addEventListener('mouseleave', () => { document.getElementById('crosshair').style.display = 'none'; });
+
+  // ── Asset switching ─────────────────────────────────────────────────────────
+  function setChartType(type, btn) {
+    chartType = type;
+    document.querySelectorAll('.chart-type-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active'); drawChart();
+  }
+
+  document.getElementById('assetSelectorBtn').onclick = openAssetSheet;
+
+  function openAssetSheet() {
+    document.getElementById('assetSheet').style.display = 'block';
+    requestAnimationFrame(() => document.getElementById('assetSheet').classList.add('active'));
+    loadAssets(); SoundEngine.play('click');
+  }
+  function closeAssetSheet() {
+    document.getElementById('assetSheet').classList.remove('active');
+    setTimeout(() => document.getElementById('assetSheet').style.display = 'none', 400);
+  }
+
+  let currentCatFilter = 'all';
+  function selectCat(cat, btn) {
+    currentCatFilter = cat;
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active'); loadAssets();
+  }
+
+  async function loadAssets() {
+    const search = document.getElementById('assetSearch').value;
+    const list = document.getElementById('assetList');
+    try {
+      const data = await UltraAPI.assets(currentCatFilter === 'all' ? '' : currentCatFilter, search);
+      list.innerHTML = data.assets.map(a => `
+        <div class="asset-item" onclick="selectAsset(${JSON.stringify(JSON.stringify(a))})">
+          <div class="asset-item-icon">${a.icon || '🪙'}</div>
+          <div class="asset-item-info">
+            <div class="asset-item-symbol">${a.symbol}</div>
+            <div class="asset-item-name">${a.name}</div>
+          </div>
+          <div class="asset-item-right">
+            <div class="asset-item-price">$${fmt.price(a.price)}</div>
+            <div class="asset-item-change ${a.change_pct >= 0 ? 'text-green' : 'text-red'}">${fmt.pct(a.change_pct)}</div>
+            <div class="asset-item-profit">+${a.profit_pct}%</div>
+          </div>
+        </div>
+      `).join('');
+    } catch (e) {
+      list.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-muted)">Failed to load assets</div>';
+    }
+  }
+
+  function selectAsset(jsonStr) {
+    const a = JSON.parse(jsonStr);
+    currentAsset = a;
+    document.getElementById('hdrAssetIcon').textContent = a.icon || '🪙';
+    document.getElementById('hdrAssetName').textContent = a.symbol;
+    const chgEl = document.getElementById('hdrAssetChange');
+    chgEl.textContent = fmt.pct(a.change_pct);
+    chgEl.className = 'asset-change ' + (a.change_pct >= 0 ? 'text-green' : 'text-red');
+    document.getElementById('valProfit').textContent = a.profit_pct + '%';
+    updatePayoutDisplay();
+    initChartData(a.price);
+    document.getElementById('livePrice').textContent = fmt.price(a.price);
+    closeAssetSheet(); SoundEngine.play('click');
+  }
+
+  // ── Controls ────────────────────────────────────────────────────────────────
+  let investStep = 50;
+  function updatePayoutDisplay() {
+    const payout = Math.round(investAmount * currentAsset.profit_pct / 100);
+    document.getElementById('putPayout').textContent = '+' + fmt.currency(payout);
+    document.getElementById('callPayout').textContent = '+' + fmt.currency(payout);
+  }
+
+  document.getElementById('btnInvestPlus').onclick = () => {
+    investAmount += investStep; document.getElementById('valInvest').textContent = fmt.currency(investAmount); updatePayoutDisplay(); SoundEngine.play('click');
+  };
+  document.getElementById('btnInvestMinus').onclick = () => {
+    investAmount = Math.max(10, investAmount - investStep); document.getElementById('valInvest').textContent = fmt.currency(investAmount); updatePayoutDisplay(); SoundEngine.play('click');
+  };
+  document.getElementById('btnTimePlus').onclick = () => {
+    tradeDuration = Math.min(60, tradeDuration + 1); document.getElementById('valTime').textContent = tradeDuration + ' min'; SoundEngine.play('click');
+  };
+  document.getElementById('btnTimeMinus').onclick = () => {
+    tradeDuration = Math.max(1, tradeDuration - 1); document.getElementById('valTime').textContent = tradeDuration + ' min'; SoundEngine.play('click');
+  };
+
+  // ── Place Trade ─────────────────────────────────────────────────────────────
+  async function placeTrade(type) {
+    if (activeTrade) { showToast('Wait for current trade to finish', 'warning'); return; }
+    const btn = type === 'call' ? document.getElementById('callBtn') : document.getElementById('putBtn');
+    btn.classList.remove('pulse'); void btn.offsetWidth; btn.classList.add('pulse');
+    SoundEngine.play(type === 'call' ? 'buy' : 'sell');
+
+    try {
+      const res = await UltraAPI.placeTrade({ asset: currentAsset.symbol, amount: investAmount, type, duration: tradeDuration });
+      activeTrade = { ...res, type, startTime: Date.now(), duration: tradeDuration * 60 * 1000 };
+      startTradeTimer();
+      showToast(`${type.toUpperCase()} placed for ${fmt.currency(investAmount)}`, 'info');
+      refreshBalance();
+    } catch (e) {
+      showToast(e.message, 'error');
+      SoundEngine.play('lose');
+    }
+  }
+
+  document.getElementById('callBtn').onclick = () => placeTrade('call');
+  document.getElementById('putBtn').onclick = () => placeTrade('put');
+
+  // ── Trade Timer ─────────────────────────────────────────────────────────────
+  function startTradeTimer() {
+    const bar = document.getElementById('activeTradeBar');
+    bar.classList.add('show');
+    document.getElementById('tradeTypeLabel').textContent = activeTrade.type.toUpperCase() + (activeTrade.type === 'call' ? ' ↑' : ' ↓');
+    const totalMs = activeTrade.duration;
+    const circumference = 81.68;
+
+    if (tradeTimerInterval) clearInterval(tradeTimerInterval);
+    tradeTimerInterval = setInterval(async () => {
+      const elapsed = Date.now() - activeTrade.startTime;
+      const remaining = Math.max(0, totalMs - elapsed);
+      const secs = Math.ceil(remaining / 1000);
+      const mins = Math.floor(secs / 60);
+      document.getElementById('tradeTimerText').textContent = `${mins}:${String(secs % 60).padStart(2, '0')}`;
+      document.getElementById('timerCircle').style.strokeDashoffset = circumference * (1 - elapsed / totalMs);
+
+      if (remaining <= 0) {
+        clearInterval(tradeTimerInterval);
+        bar.classList.remove('show');
+        // Poll for result
+        setTimeout(checkTradeResult, 2000);
+      }
+    }, 500);
+  }
+
+  async function checkTradeResult() {
+    if (!activeTrade) return;
+    try {
+      const data = await UltraAPI.tradeHistory('', 1);
+      const trade = data.trades.find(t => t.id === activeTrade.trade_id);
+      if (trade && trade.result !== 'pending') {
+        showTradeResult(trade);
+        activeTrade = null;
+        refreshBalance();
+      } else {
+        setTimeout(checkTradeResult, 2000);
+      }
+    } catch (e) { setTimeout(checkTradeResult, 3000); }
+  }
+
+  function showTradeResult(trade) {
+    const splash = document.getElementById('resultSplash');
+    const isWin = trade.result === 'win';
+    document.getElementById('resultIcon').textContent = isWin ? '🏆' : '😔';
+    document.getElementById('resultTitle').textContent = isWin ? 'YOU WIN!' : 'LOSS';
+    document.getElementById('resultTitle').style.color = isWin ? 'var(--neon-green)' : 'var(--neon-red)';
+    document.getElementById('resultAmount').textContent = isWin ? '+' + fmt.currency(trade.pnl) : fmt.currency(trade.pnl);
+    document.getElementById('resultAmount').style.color = isWin ? 'var(--neon-green)' : 'var(--neon-red)';
+    splash.classList.add('show');
+    SoundEngine.play(isWin ? 'win' : 'lose');
+  }
+
+  function closeResult() {
+    document.getElementById('resultSplash').classList.remove('show');
+  }
+
+  // ── Price refresh ────────────────────────────────────────────────────────────
+  async function refreshBalance() {
+    try {
+      const data = await UltraAPI.balance();
+      document.getElementById('headerBalance').textContent = fmt.currency(data.balance);
+    } catch (e) {}
+  }
+
+  async function refreshPrice() {
+    try {
+      const data = await UltraAPI.prices();
+      const p = data.prices[currentAsset.symbol];
+      if (p) {
+        currentAsset.price = p.price;
+        currentAsset.change_pct = p.change;
+        const priceEl = document.getElementById('livePrice');
+        const prevPrice = parseFloat(priceEl.textContent.replace(/,/g, ''));
+        priceEl.textContent = fmt.price(p.price);
+        priceEl.style.color = p.price >= prevPrice ? 'var(--neon-green)' : 'var(--neon-red)';
+        setTimeout(() => priceEl.style.color = '', 500);
+        const changeEl = document.getElementById('priceChange');
+        changeEl.textContent = fmt.pct(p.change);
+        changeEl.className = 'price-change ' + (p.change >= 0 ? 'text-green' : 'text-red');
+        appendTick(p.price); drawChart();
+      }
+    } catch (e) {}
+  }
+
+  // ── Theme toggle ────────────────────────────────────────────────────────────
+  let isDark = true;
+  document.getElementById('themeBtn').onclick = () => {
+    isDark = !isDark;
+    document.documentElement.setAttribute('data-theme', isDark ? '' : 'light');
+    document.getElementById('themeBtn').textContent = isDark ? '🌙' : '☀️';
+    drawChart();
+  };
+
+  // ── Swipe navigation ────────────────────────────────────────────────────────
+  let swipeStartX = 0;
+  document.body.addEventListener('touchstart', e => { swipeStartX = e.touches[0].clientX; }, { passive: true });
+  document.body.addEventListener('touchend', e => {
+    const diff = swipeStartX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 120 && e.target === canvas) {
+      if (diff > 0) location.href = '/markets';
+      else location.href = '/history';
+    }
+  }, { passive: true });
+
+  // ── Boot ────────────────────────────────────────────────────────────────────
+  async function boot() {
+    refreshBalance();
+    try {
+      const data = await UltraAPI.asset('BTC/USDT');
+      currentAsset = data.asset;
+      document.getElementById('hdrAssetIcon').textContent = data.asset.icon;
+      document.getElementById('hdrAssetName').textContent = data.asset.symbol;
+      document.getElementById('valProfit').textContent = data.asset.profit_pct + '%';
+    } catch (e) {}
+    initChartData(currentAsset.price);
+    updatePayoutDisplay();
+    drawChart();
+    setInterval(refreshPrice, 2000);
+    setInterval(refreshBalance, 10000);
+    window.addEventListener('resize', drawChart);
+  }
+
+  boot();
+  </script>
+</body>
+</html>

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#050814">
+  <title>Ultra Trading – Login</title>
+  <link rel="stylesheet" href="../assets/css/shared.css">
+  <style>
+    body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; overflow: hidden; }
+
+    /* 3D animated background */
+    .bg-canvas { position: fixed; inset: 0; z-index: 0; }
+    .particles { position: fixed; inset: 0; overflow: hidden; z-index: 0; }
+    .particle { position: absolute; border-radius: 50%; animation: float-particle linear infinite; }
+
+    @keyframes float-particle {
+      0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { transform: translateY(-100px) rotate(720deg); opacity: 0; }
+    }
+
+    .auth-container {
+      position: relative; z-index: 10; width: 100%; max-width: 420px;
+      background: rgba(16, 22, 40, 0.9); backdrop-filter: blur(30px) saturate(200%);
+      border: 1px solid rgba(28, 104, 255, 0.2); border-radius: 28px;
+      padding: 40px 32px; box-shadow: 0 30px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04), inset 0 1px 0 rgba(255,255,255,0.08);
+      animation: slideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(40px) scale(0.95); } to { opacity: 1; transform: none; } }
+
+    .logo { text-align: center; margin-bottom: 32px; }
+    .logo-icon { font-size: 52px; display: block; margin-bottom: 8px; filter: drop-shadow(0 0 20px rgba(28,104,255,0.6)); animation: pulse-logo 3s ease-in-out infinite; }
+    @keyframes pulse-logo { 0%,100% { transform: scale(1); filter: drop-shadow(0 0 20px rgba(28,104,255,0.6)); } 50% { transform: scale(1.05); filter: drop-shadow(0 0 30px rgba(28,104,255,0.9)); } }
+    .logo-title { font-size: 26px; font-weight: 900; background: linear-gradient(135deg, #fff 0%, var(--accent-blue) 60%, var(--neon-green) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.5px; }
+    .logo-sub { font-size: 12px; color: var(--text-secondary); margin-top: 4px; letter-spacing: 2px; text-transform: uppercase; }
+
+    .tab-switcher { display: flex; background: var(--bg-elevated); border-radius: var(--radius-md); padding: 4px; margin-bottom: 28px; gap: 4px; }
+    .tab-btn { flex: 1; padding: 10px; border-radius: 8px; font-size: 14px; font-weight: 700; color: var(--text-secondary); background: transparent; transition: var(--transition); }
+    .tab-btn.active { background: var(--accent-blue); color: #fff; box-shadow: 0 4px 14px var(--accent-blue-glow); }
+
+    .form-section { display: none; }
+    .form-section.active { display: flex; flex-direction: column; gap: 16px; animation: fadeInForm 0.3s ease; }
+    @keyframes fadeInForm { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: none; } }
+
+    .input-group { position: relative; }
+    .input-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; pointer-events: none; }
+    .input-group .form-input { padding-left: 42px; }
+
+    .divider { display: flex; align-items: center; gap: 12px; color: var(--text-muted); font-size: 12px; }
+    .divider::before, .divider::after { content:''; flex:1; height:1px; background: var(--border-color); }
+
+    .demo-accounts { display: flex; flex-direction: column; gap: 8px; }
+    .demo-btn { background: var(--bg-elevated); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 10px 14px; display: flex; align-items: center; gap: 10px; color: var(--text-primary); font-size: 13px; font-weight: 600; transition: var(--transition); cursor: pointer; }
+    .demo-btn:hover { border-color: var(--accent-blue); background: rgba(28,104,255,0.08); }
+    .demo-icon { font-size: 22px; }
+    .demo-info { display: flex; flex-direction: column; gap: 2px; text-align: left; }
+    .demo-cred { font-size: 11px; color: var(--text-secondary); }
+    .demo-badge { margin-left: auto; }
+
+    .error-msg { background: rgba(255,59,48,0.1); border: 1px solid rgba(255,59,48,0.3); color: var(--neon-red); padding: 10px 14px; border-radius: var(--radius-sm); font-size: 13px; display: none; }
+    .error-msg.show { display: block; }
+
+    .submit-btn { padding: 14px; font-size: 16px; font-weight: 800; border-radius: var(--radius-md); background: linear-gradient(135deg, var(--accent-blue), #0044cc); color: #fff; box-shadow: 0 6px 20px var(--accent-blue-glow); transition: var(--transition); letter-spacing: 0.3px; }
+    .submit-btn:hover { transform: translateY(-1px); box-shadow: 0 10px 30px var(--accent-blue-glow); }
+    .submit-btn:active { transform: translateY(1px); }
+    .submit-btn:disabled { opacity: 0.6; transform: none; }
+    .loading-dots::after { content: ''; animation: dots 1.5s infinite; }
+    @keyframes dots { 0%{content:'.'} 33%{content:'..'} 66%{content:'...'} }
+  </style>
+</head>
+<body>
+  <div class="particles" id="particles"></div>
+
+  <div class="auth-container">
+    <div class="logo">
+      <span class="logo-icon">⚡</span>
+      <div class="logo-title">ULTRA TRADING</div>
+      <div class="logo-sub">Professional Trading Platform</div>
+    </div>
+
+    <div class="tab-switcher">
+      <button class="tab-btn active" onclick="switchTab('login')">Sign In</button>
+      <button class="tab-btn" onclick="switchTab('signup')">Create Account</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div class="form-section active" id="loginSection">
+      <div class="input-group">
+        <span class="input-icon">👤</span>
+        <input class="form-input" type="text" id="loginUser" placeholder="Username or Email" autocomplete="username">
+      </div>
+      <div class="input-group">
+        <span class="input-icon">🔒</span>
+        <input class="form-input" type="password" id="loginPass" placeholder="Password" autocomplete="current-password">
+      </div>
+      <div class="error-msg" id="loginError"></div>
+      <button class="btn btn-full submit-btn" id="loginBtn" onclick="doLogin()">Sign In →</button>
+      <div class="divider">Quick Access</div>
+      <div class="demo-accounts">
+        <button class="demo-btn" onclick="quickLogin('demo_user','user123')">
+          <span class="demo-icon">👤</span>
+          <div class="demo-info">
+            <span>Demo User</span>
+            <span class="demo-cred">demo_user / user123 · ₹20,000 balance</span>
+          </div>
+          <span class="badge badge-green demo-badge">User</span>
+        </button>
+        <button class="demo-btn" onclick="quickLogin('admin','admin123')">
+          <span class="demo-icon">🛡️</span>
+          <div class="demo-info">
+            <span>Admin</span>
+            <span class="demo-cred">admin / admin123 · Full access</span>
+          </div>
+          <span class="badge badge-blue demo-badge">Admin</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- SIGNUP -->
+    <div class="form-section" id="signupSection">
+      <div class="input-group">
+        <span class="input-icon">👤</span>
+        <input class="form-input" type="text" id="signupUser" placeholder="Username">
+      </div>
+      <div class="input-group">
+        <span class="input-icon">📧</span>
+        <input class="form-input" type="email" id="signupEmail" placeholder="Email (optional)">
+      </div>
+      <div class="input-group">
+        <span class="input-icon">🔒</span>
+        <input class="form-input" type="password" id="signupPass" placeholder="Password (min 6 chars)">
+      </div>
+      <div class="error-msg" id="signupError"></div>
+      <button class="btn btn-full submit-btn" id="signupBtn" onclick="doSignup()">Create Account →</button>
+      <p style="text-align:center;font-size:12px;color:var(--text-muted)">Starting balance: ₹20,000 · Free to join</p>
+    </div>
+  </div>
+
+  <script src="../assets/js/api.js"></script>
+  <script>
+    // ── Redirect if already logged in ─────────────────────────────────
+    if (UltraAPI.token) {
+      const u = getStoredUser();
+      if (u?.role === 'admin') window.location.href = '/admin-panel';
+      else window.location.href = '/trade';
+    }
+
+    // ── Particles background ───────────────────────────────────────────
+    const particleContainer = document.getElementById('particles');
+    const colors = ['#1c68ff','#00d964','#8b5cf6','#f59e0b'];
+    for (let i = 0; i < 30; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      const size = Math.random() * 4 + 2;
+      p.style.cssText = `
+        width:${size}px; height:${size}px;
+        left:${Math.random()*100}%;
+        background:${colors[Math.floor(Math.random()*colors.length)]};
+        opacity:${Math.random()*0.6+0.2};
+        animation-duration:${Math.random()*15+10}s;
+        animation-delay:${Math.random()*-15}s;
+        box-shadow: 0 0 ${size*3}px currentColor;
+      `;
+      particleContainer.appendChild(p);
+    }
+
+    // ── Tab switching ──────────────────────────────────────────────────
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', (tab==='login'&&i===0)||(tab==='signup'&&i===1)));
+      document.getElementById('loginSection').classList.toggle('active', tab === 'login');
+      document.getElementById('signupSection').classList.toggle('active', tab === 'signup');
+      SoundEngine.play('click');
+    }
+
+    // ── Login ──────────────────────────────────────────────────────────
+    async function doLogin() {
+      const u = document.getElementById('loginUser').value.trim();
+      const p = document.getElementById('loginPass').value;
+      const errEl = document.getElementById('loginError');
+      const btn = document.getElementById('loginBtn');
+      if (!u || !p) { errEl.textContent = 'Please fill in all fields'; errEl.classList.add('show'); return; }
+
+      btn.disabled = true; btn.innerHTML = '<span class="loading-dots">Signing in</span>';
+      errEl.classList.remove('show');
+      try {
+        const data = await UltraAPI.login(u, p);
+        UltraAPI.setToken(data.token);
+        storeUser(data.user);
+        SoundEngine.play('notify');
+        showToast('Welcome back, ' + data.user.username + '! 🎉', 'success');
+        setTimeout(() => {
+          if (data.user.role === 'admin') window.location.href = '/admin-panel';
+          else window.location.href = '/trade';
+        }, 800);
+      } catch (err) {
+        errEl.textContent = err.message;
+        errEl.classList.add('show');
+        btn.disabled = false;
+        btn.innerHTML = 'Sign In →';
+        SoundEngine.play('lose');
+      }
+    }
+
+    // ── Signup ─────────────────────────────────────────────────────────
+    async function doSignup() {
+      const u = document.getElementById('signupUser').value.trim();
+      const e = document.getElementById('signupEmail').value.trim();
+      const p = document.getElementById('signupPass').value;
+      const errEl = document.getElementById('signupError');
+      const btn = document.getElementById('signupBtn');
+      if (!u || !p) { errEl.textContent = 'Username and password required'; errEl.classList.add('show'); return; }
+      if (p.length < 6) { errEl.textContent = 'Password must be at least 6 characters'; errEl.classList.add('show'); return; }
+
+      btn.disabled = true; btn.innerHTML = '<span class="loading-dots">Creating account</span>';
+      errEl.classList.remove('show');
+      try {
+        const data = await UltraAPI.signup(u, e, p);
+        UltraAPI.setToken(data.token);
+        storeUser(data.user);
+        SoundEngine.play('win');
+        showToast('Account created! ₹20,000 added to your balance 🎉', 'success', 4000);
+        setTimeout(() => window.location.href = '/trade', 1200);
+      } catch (err) {
+        errEl.textContent = err.message;
+        errEl.classList.add('show');
+        btn.disabled = false;
+        btn.innerHTML = 'Create Account →';
+      }
+    }
+
+    // ── Quick login ────────────────────────────────────────────────────
+    function quickLogin(u, p) {
+      document.getElementById('loginUser').value = u;
+      document.getElementById('loginPass').value = p;
+      switchTab('login');
+      setTimeout(doLogin, 200);
+    }
+
+    // ── Enter key ──────────────────────────────────────────────────────
+    document.addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return;
+      if (document.getElementById('loginSection').classList.contains('active')) doLogin();
+      else doSignup();
+    });
+  </script>
+</body>
+</html>

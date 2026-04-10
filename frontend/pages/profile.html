@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#050814">
+  <title>Ultra Trading – Profile</title>
+  <link rel="stylesheet" href="../assets/css/shared.css">
+  <style>
+    body { display:flex; flex-direction:column; height:100vh; height:100dvh; overflow:hidden; animation:pageEnter 0.4s ease; }
+    .scroll-body { flex:1; overflow-y:auto; padding-bottom:20px; }
+
+    .profile-hero { background:linear-gradient(135deg,#0d1a3a 0%,#1a2a6c 50%,#0d1a3a 100%); padding:28px 20px 20px; position:relative; overflow:hidden; }
+    .profile-hero::before { content:''; position:absolute; inset:0; background:radial-gradient(circle at 80% 20%, rgba(28,104,255,0.15) 0%, transparent 60%); }
+    .hero-inner { position:relative; display:flex; align-items:center; gap:16px; }
+    .avatar-circle { width:72px; height:72px; border-radius:50%; background:linear-gradient(135deg,var(--accent-blue),var(--purple)); display:flex; align-items:center; justify-content:center; font-size:30px; border:3px solid rgba(255,255,255,0.2); box-shadow:0 8px 24px rgba(0,0,0,0.4); flex-shrink:0; }
+    .hero-info { flex:1; }
+    .hero-username { font-size:22px; font-weight:900; }
+    .hero-email { font-size:13px; color:rgba(255,255,255,0.6); margin-top:2px; }
+    .hero-badge { display:inline-flex; align-items:center; gap:4px; background:rgba(28,104,255,0.3); border:1px solid var(--accent-blue); border-radius:20px; padding:3px 10px; font-size:11px; font-weight:700; color:var(--accent-blue); margin-top:6px; }
+    .hero-logout { background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:8px 14px; border-radius:var(--radius-sm); font-size:13px; font-weight:700; }
+    .hero-logout:active { transform:scale(0.95); }
+
+    .balance-card { margin:16px; background:linear-gradient(135deg,#1c68ff 0%,#7c3aed 100%); border-radius:var(--radius-xl); padding:22px 20px; position:relative; overflow:hidden; box-shadow:0 12px 40px rgba(28,104,255,0.4); }
+    .balance-card::after { content:''; position:absolute; right:-30px; top:-30px; width:160px; height:160px; background:rgba(255,255,255,0.06); border-radius:50%; pointer-events:none; }
+    .balance-label-sm { font-size:12px; font-weight:700; color:rgba(255,255,255,0.7); text-transform:uppercase; letter-spacing:1px; }
+    .balance-amount { font-size:36px; font-weight:900; letter-spacing:-1px; margin:6px 0; position:relative; }
+    .balance-sub { font-size:12px; color:rgba(255,255,255,0.6); }
+    .balance-actions { display:flex; gap:10px; margin-top:18px; position:relative; }
+    .bal-btn { flex:1; padding:12px; border-radius:var(--radius-md); font-size:14px; font-weight:800; display:flex; align-items:center; justify-content:center; gap:6px; transition:var(--transition); }
+    .bal-btn-deposit { background:rgba(255,255,255,0.2); color:#fff; border:1px solid rgba(255,255,255,0.3); }
+    .bal-btn-withdraw { background:rgba(0,0,0,0.25); color:#fff; border:1px solid rgba(255,255,255,0.15); }
+    .bal-btn:active { transform:scale(0.95); }
+
+    .stats-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin:0 16px 16px; }
+    .stat-box { background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:14px 16px; }
+    .stat-box-label { font-size:11px; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.5px; }
+    .stat-box-value { font-size:22px; font-weight:900; margin-top:4px; }
+
+    .section { margin:0 16px 16px; }
+    .section-title { font-size:13px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.8px; margin-bottom:10px; }
+
+    .payment-item { background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:14px 16px; display:flex; align-items:center; gap:12px; margin-bottom:8px; }
+    .pay-icon { width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+    .pay-icon.deposit { background:rgba(0,217,100,0.15); border:1px solid rgba(0,217,100,0.3); }
+    .pay-icon.withdraw { background:rgba(255,59,48,0.15); border:1px solid rgba(255,59,48,0.3); }
+    .pay-info { flex:1; }
+    .pay-type { font-size:14px; font-weight:700; }
+    .pay-date { font-size:11px; color:var(--text-muted); margin-top:2px; }
+    .pay-right { text-align:right; }
+    .pay-amount { font-size:15px; font-weight:800; }
+    .pay-status { font-size:11px; font-weight:700; margin-top:3px; }
+    .status-pending { color:var(--gold); }
+    .status-approved { color:var(--neon-green); }
+    .status-rejected { color:var(--neon-red); }
+
+    .settings-menu { background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius-lg); overflow:hidden; }
+    .settings-item { display:flex; align-items:center; gap:14px; padding:15px 16px; border-bottom:1px solid var(--border-light); cursor:pointer; transition:var(--transition); }
+    .settings-item:last-child { border-bottom:none; }
+    .settings-item:active { background:var(--bg-elevated); }
+    .si-icon { font-size:22px; width:36px; text-align:center; }
+    .si-label { flex:1; font-size:15px; font-weight:600; }
+    .si-arrow { color:var(--text-muted); }
+    .si-value { font-size:13px; color:var(--text-secondary); }
+
+    .lock-banner { margin:0 16px 16px; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.3); border-radius:var(--radius-md); padding:14px 16px; display:flex; align-items:center; gap:12px; }
+    .lock-icon { font-size:28px; }
+    .lock-title { font-size:14px; font-weight:800; color:var(--gold); }
+    .lock-timer { font-size:13px; color:var(--text-secondary); margin-top:2px; }
+
+    .modal-title { font-size:18px; font-weight:900; margin-bottom:20px; }
+    .qr-block { background:var(--bg-elevated); border-radius:var(--radius-md); padding:20px; text-align:center; margin-bottom:16px; }
+    .qr-placeholder { font-size:64px; display:block; margin-bottom:8px; }
+    .upi-id-display { font-size:16px; font-weight:800; color:var(--accent-blue); margin-top:8px; }
+    .note-box { background:var(--bg-elevated); border-radius:var(--radius-md); padding:12px 14px; font-size:13px; color:var(--text-secondary); margin-bottom:16px; line-height:1.5; }
+    .err-inline { display:none; background:rgba(255,59,48,0.1); border:1px solid rgba(255,59,48,0.3); color:var(--neon-red); padding:10px 14px; border-radius:var(--radius-sm); font-size:13px; }
+    .err-inline.show { display:block; }
+  </style>
+</head>
+<body>
+<div class="scroll-body">
+
+  <!-- Hero -->
+  <div class="profile-hero">
+    <div class="hero-inner">
+      <div class="avatar-circle" id="avatarCircle">👤</div>
+      <div class="hero-info">
+        <div class="hero-username" id="heroUsername">—</div>
+        <div class="hero-email" id="heroEmail">—</div>
+        <div class="hero-badge" id="heroBadge">👤 User</div>
+      </div>
+      <button class="hero-logout" onclick="logout()">Sign Out</button>
+    </div>
+  </div>
+
+  <!-- Balance Card -->
+  <div class="balance-card">
+    <div class="balance-label-sm">Available Balance</div>
+    <div class="balance-amount" id="balanceAmount">₹0.00</div>
+    <div class="balance-sub" id="balanceSub">Loading...</div>
+    <div class="balance-actions">
+      <button class="bal-btn bal-btn-deposit" onclick="openDepositModal()">⬇️ Deposit</button>
+      <button class="bal-btn bal-btn-withdraw" onclick="openWithdrawModal()">⬆️ Withdraw</button>
+    </div>
+  </div>
+
+  <!-- Payment Lock -->
+  <div class="lock-banner" id="lockBanner" style="display:none;">
+    <span class="lock-icon">🔒</span>
+    <div>
+      <div class="lock-title">Payments Locked</div>
+      <div class="lock-timer" id="lockTimerText">Temporarily disabled by admin</div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="section">
+    <div class="section-title">📊 Performance</div>
+    <div class="stats-grid">
+      <div class="stat-box"><div class="stat-box-label">Total Trades</div><div class="stat-box-value" id="sTrades">0</div></div>
+      <div class="stat-box"><div class="stat-box-label">Win Rate</div><div class="stat-box-value text-green" id="sWinRate">0%</div></div>
+      <div class="stat-box"><div class="stat-box-label">Total Profit</div><div class="stat-box-value text-green" id="sProfit">₹0</div></div>
+      <div class="stat-box"><div class="stat-box-label">Net P&L</div><div class="stat-box-value" id="sNetPnl">₹0</div></div>
+    </div>
+  </div>
+
+  <!-- Payment History -->
+  <div class="section">
+    <div class="section-title">💳 Payment History</div>
+    <div id="payList"><div style="text-align:center;padding:20px;color:var(--text-muted)">Loading...</div></div>
+  </div>
+
+  <!-- Settings -->
+  <div class="section">
+    <div class="section-title">⚙️ Settings</div>
+    <div class="settings-menu">
+      <div class="settings-item" onclick="openModal('pwdModal')">
+        <span class="si-icon">🔑</span><span class="si-label">Change Password</span><span class="si-arrow">›</span>
+      </div>
+      <div class="settings-item" onclick="toggleSound()">
+        <span class="si-icon">🔊</span><span class="si-label">Sound Effects</span>
+        <span class="si-value" id="soundStatus">On</span>
+      </div>
+      <div class="settings-item" onclick="toggleTheme()">
+        <span class="si-icon" id="themeIcon">🌙</span><span class="si-label">Theme</span>
+        <span class="si-value" id="themeStatus">Dark</span>
+      </div>
+      <div class="settings-item" id="adminLink" style="display:none;" onclick="location.href='/admin-panel'">
+        <span class="si-icon">🛡️</span><span class="si-label">Admin Panel</span><span class="si-arrow">›</span>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /scroll-body -->
+
+<nav class="bottom-nav">
+  <button class="nav-item" onclick="location.href='/trade'"><span class="nav-icon">📊</span>Trade</button>
+  <button class="nav-item" onclick="location.href='/markets'"><span class="nav-icon">📈</span>Markets</button>
+  <button class="nav-item" onclick="location.href='/history'"><span class="nav-icon">📜</span>History</button>
+  <button class="nav-item active"><span class="nav-icon">👤</span>Profile</button>
+</nav>
+
+<!-- Deposit Modal -->
+<div class="modal-overlay" id="depositModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">⬇️ Deposit Funds</div>
+    <div class="qr-block">
+      <div id="qrPlaceholder"><span class="qr-placeholder">📷</span><div style="color:var(--text-muted);font-size:13px">Scan QR to pay</div></div>
+      <img id="qrActual" style="display:none;width:180px;height:180px;border-radius:12px;margin:0 auto;" alt="QR Code">
+      <div class="upi-id-display" id="upiDisplay">Loading UPI...</div>
+    </div>
+    <div class="note-box">📸 After completing payment, enter the amount and upload your payment screenshot below.</div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div class="form-group">
+        <label class="form-label">Amount (₹) — Min: <span id="depositMin">₹100</span></label>
+        <input class="form-input" type="number" id="depositAmount" placeholder="Enter amount">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Payment Screenshot (optional)</label>
+        <input class="form-input" type="file" id="depositSS" accept="image/*" style="padding:8px;">
+      </div>
+      <button class="btn btn-success btn-full btn-lg" onclick="submitDeposit()">✅ Submit Deposit Request</button>
+      <button class="btn btn-ghost btn-full" onclick="closeModal('depositModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Withdraw Modal -->
+<div class="modal-overlay" id="withdrawModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">⬆️ Withdraw Funds</div>
+    <div class="note-box" style="display:flex;justify-content:space-between;align-items:center;">
+      <span>Available Balance</span>
+      <strong class="text-green" id="wdBalance">₹0.00</strong>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div class="form-group">
+        <label class="form-label">Amount (₹) — Min: <span id="withdrawMin">₹150</span></label>
+        <input class="form-input" type="number" id="wdAmount" placeholder="Enter amount">
+      </div>
+      <div class="form-group">
+        <label class="form-label">UPI ID</label>
+        <input class="form-input" type="text" id="wdUpi" placeholder="yourname@upi">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Account Holder Name</label>
+        <input class="form-input" type="text" id="wdName" placeholder="Full Name">
+      </div>
+      <div class="note-box">ℹ️ Withdrawals processed manually by admin — usually within 24 hours.</div>
+      <button class="btn btn-danger btn-full btn-lg" onclick="submitWithdraw()">💸 Submit Withdrawal</button>
+      <button class="btn btn-ghost btn-full" onclick="closeModal('withdrawModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Change Password Modal -->
+<div class="modal-overlay" id="pwdModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🔑 Change Password</div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div class="form-group"><label class="form-label">Current Password</label><input class="form-input" type="password" id="curPwd" placeholder="Current password"></div>
+      <div class="form-group"><label class="form-label">New Password</label><input class="form-input" type="password" id="newPwd" placeholder="At least 6 characters"></div>
+      <div class="form-group"><label class="form-label">Confirm New Password</label><input class="form-input" type="password" id="confPwd" placeholder="Repeat new password"></div>
+      <div class="err-inline" id="pwdErr"></div>
+      <button class="btn btn-primary btn-full btn-lg" onclick="changePassword()">Update Password</button>
+      <button class="btn btn-ghost btn-full" onclick="closeModal('pwdModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/js/api.js"></script>
+<script>
+if (!UltraAPI.token) window.location.href = '/';
+
+let userBalance = 0, paySettings = {};
+
+async function boot() {
+  try {
+    const [profData, statsData, payS] = await Promise.all([
+      UltraAPI.profile(), UltraAPI.tradeStats(), UltraAPI.paymentSettings()
+    ]);
+    const u = profData.user;
+    paySettings = payS;
+    userBalance = u.balance;
+    storeUser(u);
+
+    // Hero
+    const emojiAvatars = ['🐯','🦁','🦊','🐺','🦅','🐬','🦋','⚡','🔥','🌟'];
+    document.getElementById('avatarCircle').textContent = u.role === 'admin' ? '🛡️' : emojiAvatars[u.username.charCodeAt(0) % emojiAvatars.length];
+    document.getElementById('heroUsername').textContent = u.username;
+    document.getElementById('heroEmail').textContent = u.email || 'No email';
+    if (u.role === 'admin') {
+      const b = document.getElementById('heroBadge');
+      b.textContent = '🛡️ Admin'; b.style.cssText += ';color:var(--gold);border-color:var(--gold);background:rgba(245,158,11,0.15);';
+      document.getElementById('adminLink').style.display = 'flex';
+    }
+
+    // Balance card
+    document.getElementById('balanceAmount').textContent = fmt.currency(u.balance);
+    document.getElementById('balanceSub').textContent = 'Member since ' + new Date(u.created_at).toLocaleDateString('en-IN', {month:'short',year:'numeric'});
+    document.getElementById('wdBalance').textContent = fmt.currency(u.balance);
+
+    // Stats
+    const s = statsData;
+    document.getElementById('sTrades').textContent = s.total || 0;
+    const comp = Math.max(1, (s.total||0) - (s.pending||0));
+    const wr = comp > 0 ? Math.round(((s.wins||0)/comp)*100) : 0;
+    document.getElementById('sWinRate').textContent = wr + '%';
+    document.getElementById('sProfit').textContent = fmt.currency(s.total_profit||0);
+    const net = (s.total_profit||0) - (s.total_loss||0);
+    const netEl = document.getElementById('sNetPnl');
+    netEl.textContent = (net>=0?'+':'') + fmt.currency(net);
+    netEl.className = 'stat-box-value ' + (net>=0 ? 'text-green' : 'text-red');
+
+    // Payment settings
+    document.getElementById('depositMin').textContent = '₹' + (payS.deposit_min||100);
+    document.getElementById('withdrawMin').textContent = '₹' + (payS.withdraw_min||150);
+
+    if (payS.payment_lock === 'true') {
+      document.getElementById('lockBanner').style.display = 'flex';
+      const timer = parseInt(payS.payment_lock_timer||'0');
+      if (timer > 0) startLockCountdown(timer);
+    }
+
+    // QR
+    if (payS.qr_image) {
+      document.getElementById('qrPlaceholder').style.display = 'none';
+      const img = document.getElementById('qrActual');
+      img.src = payS.qr_image; img.style.display = 'block';
+    }
+    document.getElementById('upiDisplay').textContent = payS.upi_id || 'Contact admin for UPI ID';
+
+    loadPaymentHistory();
+  } catch(e) {
+    showToast('Failed to load profile: ' + e.message, 'error');
+  }
+}
+
+function startLockCountdown(secs) {
+  let r = secs;
+  const el = document.getElementById('lockTimerText');
+  const iv = setInterval(() => {
+    r--;
+    const m = Math.floor(r/60), s = r%60;
+    el.textContent = `Unlocks in ${m}:${String(s).padStart(2,'0')}`;
+    if (r<=0) { clearInterval(iv); document.getElementById('lockBanner').style.display='none'; }
+  }, 1000);
+}
+
+async function loadPaymentHistory() {
+  const el = document.getElementById('payList');
+  try {
+    const data = await UltraAPI.paymentHistory();
+    if (!data.payments.length) { el.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-muted)">No payment history yet</div>'; return; }
+    el.innerHTML = data.payments.slice(0,10).map(p => `
+      <div class="payment-item">
+        <div class="pay-icon ${p.type}">${p.type==='deposit'?'⬇️':'⬆️'}</div>
+        <div class="pay-info">
+          <div class="pay-type">${p.type==='deposit'?'Deposit':'Withdrawal'}</div>
+          <div class="pay-date">${fmt.date(p.created_at)}</div>
+          ${p.admin_note?`<div style="font-size:11px;color:var(--text-muted)">${p.admin_note}</div>`:''}
+        </div>
+        <div class="pay-right">
+          <div class="pay-amount ${p.type==='deposit'?'text-green':'text-red'}">${p.type==='deposit'?'+':'-'}${fmt.currency(p.amount)}</div>
+          <div class="pay-status status-${p.status}">${p.status.toUpperCase()}</div>
+        </div>
+      </div>`).join('');
+  } catch(e) { el.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-muted)">Failed to load</div>'; }
+}
+
+function openModal(id) { document.getElementById(id).classList.add('active'); SoundEngine.play('click'); }
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('click', e => { if(e.target===m) closeModal(m.id); }));
+
+function openDepositModal() {
+  if (paySettings.payment_lock==='true') { showToast('Deposits are currently locked by admin','error'); return; }
+  openModal('depositModal');
+}
+function openWithdrawModal() {
+  if (paySettings.payment_lock==='true') { showToast('Withdrawals are currently locked','error'); return; }
+  document.getElementById('wdBalance').textContent = fmt.currency(userBalance);
+  openModal('withdrawModal');
+}
+
+async function submitDeposit() {
+  const amount = document.getElementById('depositAmount').value;
+  const min = parseInt(paySettings.deposit_min||100);
+  if (!amount || parseFloat(amount)<min) { showToast(`Minimum deposit is ₹${min}`,'error'); return; }
+  const fd = new FormData();
+  fd.append('amount', amount);
+  const ss = document.getElementById('depositSS').files[0];
+  if (ss) fd.append('screenshot', ss);
+  try {
+    await UltraAPI.deposit(fd);
+    closeModal('depositModal');
+    showToast('Deposit request submitted! Admin will approve shortly 🎉','success',4000);
+    SoundEngine.play('notify');
+    document.getElementById('depositAmount').value='';
+    document.getElementById('depositSS').value='';
+    loadPaymentHistory();
+  } catch(e) { showToast(e.message,'error'); }
+}
+
+async function submitWithdraw() {
+  const amount = parseFloat(document.getElementById('wdAmount').value||0);
+  const upi_id = document.getElementById('wdUpi').value.trim();
+  const upi_name = document.getElementById('wdName').value.trim();
+  const min = parseInt(paySettings.withdraw_min||150);
+  if (amount<min) { showToast(`Minimum withdrawal ₹${min}`,'error'); return; }
+  if (!upi_id) { showToast('UPI ID required','error'); return; }
+  if (!upi_name) { showToast('Account holder name required','error'); return; }
+  if (amount>userBalance) { showToast('Insufficient balance','error'); return; }
+  try {
+    await UltraAPI.withdraw({ amount, upi_id, upi_name });
+    closeModal('withdrawModal');
+    showToast('Withdrawal submitted! Processing in 24h 💸','success',4000);
+    SoundEngine.play('notify');
+    userBalance -= amount;
+    document.getElementById('balanceAmount').textContent = fmt.currency(userBalance);
+    loadPaymentHistory();
+  } catch(e) { showToast(e.message,'error'); }
+}
+
+async function changePassword() {
+  const cur=document.getElementById('curPwd').value, nw=document.getElementById('newPwd').value, conf=document.getElementById('confPwd').value;
+  const err=document.getElementById('pwdErr');
+  if (!cur||!nw||!conf) { err.textContent='All fields required'; err.classList.add('show'); return; }
+  if (nw!==conf) { err.textContent='Passwords do not match'; err.classList.add('show'); return; }
+  if (nw.length<6) { err.textContent='Password too short (min 6)'; err.classList.add('show'); return; }
+  try {
+    await UltraAPI.post('/auth/change-password',{current_password:cur,new_password:nw});
+    closeModal('pwdModal');
+    showToast('Password changed! 🔒','success');
+    ['curPwd','newPwd','confPwd'].forEach(id=>document.getElementById(id).value='');
+    err.classList.remove('show');
+  } catch(e) { err.textContent=e.message; err.classList.add('show'); }
+}
+
+let isDark=true;
+function toggleTheme() {
+  isDark=!isDark;
+  document.documentElement.setAttribute('data-theme',isDark?'':'light');
+  document.getElementById('themeIcon').textContent=isDark?'🌙':'☀️';
+  document.getElementById('themeStatus').textContent=isDark?'Dark':'Light';
+}
+function toggleSound() {
+  SoundEngine.enabled=!SoundEngine.enabled;
+  document.getElementById('soundStatus').textContent=SoundEngine.enabled?'On':'Off';
+  if(SoundEngine.enabled) SoundEngine.play('click');
+}
+function logout() {
+  UltraAPI.clearToken();
+  showToast('Logged out','info');
+  setTimeout(()=>window.location.href='/',600);
+}
+boot();
+</script>
+</body>
+</html>
